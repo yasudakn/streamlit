@@ -3,8 +3,8 @@
     "subdir": "noarch"
   },
   "packages": {
-    "streamlit-1.9.0-d91b6039.tar.bz2": {
-      "build": "d91b6039",
+    "streamlit-1.9.0-031d07c5.tar.bz2": {
+      "build": "031d07c5",
       "build_number": 0,
       "depends": [
         "altair >=3.2.0",
@@ -17,7 +17,7 @@
         "packaging >=14.1",
         "pandas >=0.21.0",
         "pillow >=6.2.0",
-        "protobuf >=3.12,<4",
+        "protobuf >=3.11,<4",
         "pyarrow >=4.0",
         "pympler >=0.9",
         "python >=3.7",
@@ -33,13 +33,13 @@
         "watchdog"
       ],
       "license": "Apache-2.0",
-      "md5": "f0b24c944b712c4685c9a8a835202ab4",
+      "md5": "ac0e38c78de0921467146817d00b9edd",
       "name": "streamlit",
       "noarch": "python",
-      "sha256": "29d8e4acff8295351864f7a87a92194cdd612f1fe0281ff1b08f4f4771f019d5",
-      "size": 12924766,
+      "sha256": "b2676a11c9a79d67a75e013d3bd5fa27e1f3186f33d22b15738225d56d5e5685",
+      "size": 12873482,
       "subdir": "noarch",
-      "timestamp": 1655506767567,
+      "timestamp": 1656688553096,
       "version": "1.9.0"
     }
   },
