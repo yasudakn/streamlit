@@ -204,9 +204,21 @@ def download_file(url: str, path: str) -> None:
     print(f"Downloading {url} -> {path}...")
 
     response = requests.get(url, stream=True)
-    with open(path, "wb") as f:
-        for data in response.iter_content():
-            f.write(data)
+    try:
+        with open(path, "wb") as f:
+            for data in response.iter_content():
+                f.write(data)
+    except:
+        # If the download fails, delete the file so we don't leave a partial
+        # download on disk.
+        try:
+            os.remove(path)
+            print(f"Removed partially-downloaded file at {path}")
+        except:
+            print(f"Failed to remove partially-downloaded file at {path}")
+
+        # Re-raise the failed-download exception.
+        raise
 
     print(f"Download complete!")
 
@@ -229,6 +241,10 @@ def populate_repo_packages(package_infos: List[JSONDict], repo_root: str) -> Non
 
         # If the package exists in one of our cache directories,
         # copy it into place.
+        # TODO: it seems like sometimes cached packages are stored as .tar.bz2
+        #  archives, and sometimes they're uncompressed. We currently only
+        #  search for archives, but should also detect uncompressed packages
+        #  and compress them!
         copied_from_cache = False
         for cache_dir in cache_dirs:
             cache_path = get_package_cache_path(cache_dir, info["dist_name"])
