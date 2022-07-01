@@ -36,7 +36,10 @@ requirements:
     - packaging >=14.1
     - pandas >=0.21.0
     - pillow >=6.2.0
-    - protobuf >=3.12, <4
+    # - protobuf >=3.12, <4
+    # 2022.07.01 - temporarily set protobuf's lower bound to 3.11
+    # to work around a conda resolution issue
+    - protobuf >=3.11, <4
     - pyarrow >=4.0
     # - pydeck >=0.1.dev5
     - pympler >=0.9
