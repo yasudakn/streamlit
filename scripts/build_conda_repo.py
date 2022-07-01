@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import datetime
 import hashlib
 import json
 import os.path
@@ -203,10 +204,12 @@ def download_file(url: str, path: str) -> None:
 
     print(f"Downloading {url} -> {path}...")
 
+    start_time = datetime.datetime.now()
+
     response = requests.get(url, stream=True)
     try:
         with open(path, "wb") as f:
-            for data in response.iter_content():
+            for data in response.iter_content(chunk_size=1024 * 128):
                 f.write(data)
     except:
         # If the download fails, delete the file so we don't leave a partial
@@ -220,7 +223,9 @@ def download_file(url: str, path: str) -> None:
         # Re-raise the failed-download exception.
         raise
 
-    print(f"Download complete!")
+    duration = datetime.datetime.now() - start_time
+
+    print(f"Download completed! ({duration.total_seconds():.2f}s)")
 
 
 def populate_repo_packages(package_infos: List[JSONDict], repo_root: str) -> None:
