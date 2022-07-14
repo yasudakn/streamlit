@@ -101,12 +101,11 @@ def page_name_and_icon(script_path: Path) -> Tuple[str, str]:
     if not name:
         name = extraction.group(1)
 
+    icon = ""
     extracted_icon = re.search(PAGE_ICON_REGEX, name)
     if extracted_icon is not None:
         icon = str(extracted_icon.group(1))
         name = re.sub(PAGE_ICON_REGEX, "", name)
-    else:
-        icon = ""
 
     return str(name), icon
 
@@ -152,18 +151,35 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
                 "page_script_hash": main_page_script_hash,
                 "page_name": main_page_name,
                 "icon": main_page_icon,
+                "major_class": 0,
                 "script_path": str(main_script_path),
             }
         }
 
         pages_dir = main_script_path.parent / "pages"
         page_scripts = sorted(
-            [f for f in pages_dir.glob("*.py") if not f.name.startswith(".")],
+            [f for f in pages_dir.glob(
+                "**/*.py") if not f.name.startswith(".")],
             key=page_sort_key,
         )
 
+        parent_dirs = []
         for script_path in page_scripts:
             script_path_str = str(script_path)
+            parent = re.search(r'pages/(.+)', str(script_path.parent))
+            pn = parent.group(1)
+            if parent and 0 < len(pn):
+                if not pn in parent_dirs:
+                    parent_dirs.append(pn)
+                    pi = ""
+                    psh = calc_md5(str(script_path.parent))
+                    pages[psh] = {
+                        "page_script_hash": psh,
+                        "page_name": pn,
+                        "icon": pi,
+                        "major_class": 1,
+                        "script_path": str(script_path.parent),
+                    }
             pn, pi = page_name_and_icon(script_path)
             psh = calc_md5(script_path_str)
 
@@ -171,6 +187,7 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
                 "page_script_hash": psh,
                 "page_name": pn,
                 "icon": pi,
+                "major_class": 0,
                 "script_path": script_path_str,
             }
 

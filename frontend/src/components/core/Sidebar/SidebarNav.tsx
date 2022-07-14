@@ -98,7 +98,7 @@ const SidebarNav = ({
       >
         {appPages.map(
           (
-            { icon: pageIcon, pageName, pageScriptHash }: IAppPage,
+            { icon: pageIcon, pageName, pageScriptHash, majorClass }: IAppPage,
             pageIndex: number
           ) => {
             pageName = pageName as string
@@ -125,28 +125,32 @@ const SidebarNav = ({
             return (
               <li key={pageName}>
                 <StyledSidebarNavLinkContainer>
-                  <StyledSidebarNavLink
-                    isActive={pageScriptHash === currentPageScriptHash}
-                    href={pageUrl}
-                    onClick={e => {
-                      e.preventDefault()
-                      onPageChange(pageScriptHash as string)
-                      if (reactDeviceDetect.isMobile) {
-                        collapseSidebar()
-                      }
-                    }}
-                  >
-                    {pageIcon && pageIcon.length ? (
-                      <EmojiIcon size="lg">{pageIcon}</EmojiIcon>
-                    ) : (
-                      <Icon
-                        color="darkenedBgMix100"
-                        content={Description}
-                        size="lg"
-                      />
-                    )}
+                  {majorClass ? (
                     <span>{pageName.replace(/_/g, " ")}</span>
-                  </StyledSidebarNavLink>
+                  ) : (
+                    <StyledSidebarNavLink
+                      isActive={pageScriptHash === currentPageScriptHash}
+                      href={pageUrl}
+                      onClick={e => {
+                        e.preventDefault()
+                        onPageChange(pageScriptHash as string)
+                        if (reactDeviceDetect.isMobile) {
+                          collapseSidebar()
+                        }
+                      }}
+                    >
+                      {pageIcon && pageIcon.length ? (
+                        <EmojiIcon size="lg">{pageIcon}</EmojiIcon>
+                      ) : (
+                        <Icon
+                          color="darkenedBgMix100"
+                          content={Description}
+                          size="lg"
+                        />
+                      )}
+                      <span>{pageName.replace(/_/g, " ")}</span>
+                    </StyledSidebarNavLink>
+                  )}
                 </StyledSidebarNavLinkContainer>
               </li>
             )
