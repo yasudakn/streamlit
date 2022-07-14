@@ -126,7 +126,9 @@ const SidebarNav = ({
               <li key={pageName}>
                 <StyledSidebarNavLinkContainer>
                   {majorClass ? (
-                    <span>{pageName.replace(/_/g, " ")}</span>
+                    <span className="major-class">
+                      {pageName.replace(/_/g, " ")}
+                    </span>
                   ) : (
                     <StyledSidebarNavLink
                       isActive={pageScriptHash === currentPageScriptHash}
