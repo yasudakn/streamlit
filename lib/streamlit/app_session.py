@@ -729,4 +729,4 @@ def _populate_app_pages(
         page_proto.page_script_hash = page_script_hash
         page_proto.page_name = page_info["page_name"]
         page_proto.icon = page_info["icon"]
-        page_proto.major_class = page_info["major_class"]
+        page_proto.major_class = page_info.get("major_class", 0)

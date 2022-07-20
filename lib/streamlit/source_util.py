@@ -151,7 +151,6 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
                 "page_script_hash": main_page_script_hash,
                 "page_name": main_page_name,
                 "icon": main_page_icon,
-                "major_class": 0,
                 "script_path": str(main_script_path),
             }
         }
@@ -167,9 +166,9 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
         for script_path in page_scripts:
             script_path_str = str(script_path)
             parent = re.search(r'pages/(.+)', str(script_path.parent))
-            pn = parent.group(1)
-            if parent and 0 < len(pn):
-                if not pn in parent_dirs:
+            if parent:
+                pn = parent.group(1)
+                if 0 < len(pn) and not pn in parent_dirs:
                     parent_dirs.append(pn)
                     pi = ""
                     psh = calc_md5(str(script_path.parent))
@@ -187,7 +186,6 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
                 "page_script_hash": psh,
                 "page_name": pn,
                 "icon": pi,
-                "major_class": 0,
                 "script_path": script_path_str,
             }
 
