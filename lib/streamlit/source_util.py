@@ -157,14 +157,12 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
 
         pages_dir = main_script_path.parent / "pages"
         page_scripts = sorted(
-            [f for f in pages_dir.glob(
-                "**/*.py") if not f.name.startswith(".")],
+            [f for f in pages_dir.glob("**/*.py") if not f.name.startswith(".")],
             key=page_sort_key,
         )
 
         parent_dirs = []
         for script_path in page_scripts:
-            script_path_str = str(script_path.resolve())
             parent = re.search(r'pages/(.+)', str(script_path.parent))
             if parent:
                 pn = parent.group(1)
@@ -177,16 +175,16 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
                         "page_name": pn,
                         "icon": pi,
                         "major_class": 1,
-                        "script_path": str(script_path.parent),
+                        "script_path": str(script_path.parent.resolve()),
                     }
             pn, pi = page_name_and_icon(script_path)
-            psh = calc_md5(script_path_str)
+            psh = calc_md5(str(script_path))
 
             pages[psh] = {
                 "page_script_hash": psh,
                 "page_name": pn,
                 "icon": pi,
-                "script_path": script_path_str,
+                "script_path": str(script_path.resolve()),
             }
 
         _cached_pages = pages
