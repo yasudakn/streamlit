@@ -141,14 +141,8 @@ const SidebarNav = ({
                         }
                       }}
                     >
-                      {pageIcon && pageIcon.length ? (
+                      {pageIcon && pageIcon.length && (
                         <EmojiIcon size="lg">{pageIcon}</EmojiIcon>
-                      ) : (
-                        <Icon
-                          color="darkenedBgMix100"
-                          content={Description}
-                          size="lg"
-                        />
                       )}
                       <span>{pageName.replace(/_/g, " ")}</span>
                     </StyledSidebarNavLink>

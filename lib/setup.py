@@ -40,6 +40,7 @@ INSTALL_REQUIRES = [
     "blinker>=1.0.0",
     "cachetools>=4.0",
     "click>=7.0",
+    "emoji>=2.0",
     # 1.4 introduced the functionality found in python 3.8's importlib.metadata module
     "importlib-metadata>=1.4",
     "numpy",

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import emoji
 import re
 import threading
 from pathlib import Path
@@ -47,20 +48,13 @@ PAGE_FILENAME_REGEX = re.compile(r"([0-9]*)[_ -]*(.*)\.py")
 # Regex pattern to extract emoji taken from https://gist.github.com/Alex-Just/e86110836f3f93fe7932290526529cd1#gistcomment-3208085
 # We may eventually want to swap this out for https://pypi.org/project/emoji,
 # but I want to avoid adding a dependency if possible.
-PAGE_ICON_REGEX = re.compile(
-    "(^[\U0001F1E0-\U0001F1FF"
-    "\U0001F300-\U0001F5FF"
-    "\U0001F600-\U0001F64F"
-    "\U0001F680-\U0001F6FF"
-    "\U0001F700-\U0001F77F"
-    "\U0001F780-\U0001F7FF"
-    "\U0001F800-\U0001F8FF"
-    "\U0001F900-\U0001F9FF"
-    "\U0001FA00-\U0001FA6F"
-    "\U0001FA70-\U0001FAFF"
-    "\U00002702-\U000027B0"
-    "\U000024C2-\U0001F251])[_-]*"
-)
+def get_emoji_regexp():
+    # Sort emoji by length to make sure multi-character emojis are
+    # matched first
+    emojis = sorted(emoji.EMOJI_DATA, key=len, reverse=True)
+    pattern = u'(' + u'|'.join(re.escape(u) for u in emojis) + u')'
+    return re.compile(pattern)
+PAGE_ICON_REGEX = get_emoji_regexp()
 
 
 def page_sort_key(script_path: Path) -> Tuple[float, str]:
