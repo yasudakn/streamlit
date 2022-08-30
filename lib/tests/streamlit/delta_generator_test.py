@@ -31,8 +31,8 @@ from streamlit.proto.TextInput_pb2 import TextInput
 from streamlit.proto.Empty_pb2 import Empty as EmptyProto
 from streamlit.proto.RootContainer_pb2 import RootContainer
 from streamlit.proto.Text_pb2 import Text as TextProto
-from streamlit.state.widgets import _build_duplicate_widget_message
-import streamlit.state.widgets as w
+from streamlit.runtime.state.widgets import _build_duplicate_widget_message
+import streamlit.runtime.state.widgets as w
 from tests import testutil
 
 
@@ -102,7 +102,7 @@ class FakeDeltaGenerator(object):
 
         The real DeltaGenerator exception is more complicated.  We use
         this so _with_element can find the exception method.  The real
-        exception method wil be tested later on.
+        exception method will be tested later on.
         """
         self._exception_msg = str(e)
 
@@ -415,6 +415,28 @@ class DeltaGeneratorWithTest(testutil.DeltaGeneratorTestCase):
 class DeltaGeneratorWriteTest(testutil.DeltaGeneratorTestCase):
     """Test DeltaGenerator Text, Alert, Json, and Markdown Classes."""
 
+    def test_json_list(self):
+        """Test Text.JSON list."""
+        json_data = [5, 6, 7, 8]
+
+        st.json(json_data)
+
+        json_string = json.dumps(json_data)
+
+        element = self.get_delta_from_queue().new_element
+        self.assertEqual(json_string, element.json.body)
+
+    def test_json_tuple(self):
+        """Test Text.JSON tuple."""
+        json_data = (5, 6, 7, 8)
+
+        st.json(json_data)
+
+        json_string = json.dumps(json_data)
+
+        element = self.get_delta_from_queue().new_element
+        self.assertEqual(json_string, element.json.body)
+
     def test_json_object(self):
         """Test Text.JSON object."""
         json_data = {"key": "value"}
@@ -462,6 +484,29 @@ class DeltaGeneratorWriteTest(testutil.DeltaGeneratorTestCase):
         element = self.get_delta_from_queue().new_element
         self.assertEqual(json_string, element.json.body)
         self.assertEqual(False, element.json.expanded)
+
+    def test_json_not_mutates_data_containing_sets(self):
+        """Test st.json do not mutate data containing sets,
+        pass a dict-containing-a-set to st.json; ensure that it's not mutated
+        """
+        json_data = {"some_set": {"a", "b"}}
+        self.assertIsInstance(json_data["some_set"], set)
+
+        st.json(json_data)
+        self.assertIsInstance(json_data["some_set"], set)
+
+    def test_json_serializes_sets_as_lists(self):
+        """Test st.json serializes sets as lists"""
+        json_data = {"some_set": {"a", "b"}}
+
+        st.json(json_data)
+        element = self.get_delta_from_queue().new_element
+
+        parsed_element = json.loads(element.json.body)
+        set_as_list = parsed_element.get("some_set")
+
+        self.assertIsInstance(set_as_list, list)
+        self.assertSetEqual(json_data["some_set"], set(set_as_list))
 
     def test_markdown(self):
         """Test Markdown element."""

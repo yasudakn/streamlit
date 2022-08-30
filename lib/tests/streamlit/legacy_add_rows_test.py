@@ -16,12 +16,13 @@
 from typing import Optional
 
 import pandas as pd
+import pytest
 import pyarrow as pa
 
 from streamlit.errors import StreamlitAPIException
 from streamlit.proto.DataFrame_pb2 import DataFrame
 from streamlit.proto.Delta_pb2 import Delta
-from streamlit.scriptrunner import get_script_run_ctx
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 import streamlit as st
 from tests import testutil
 
@@ -111,6 +112,7 @@ class DeltaGeneratorAddRowsTest(testutil.DeltaGeneratorTestCase):
             get_script_run_ctx().reset()
             self.forward_msg_queue.clear()
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_with_index_legacy_add_rows(self):
         """Test plain old _legacy_add_rows."""
         all_methods = self._get_unnamed_data_methods()
@@ -139,6 +141,7 @@ class DeltaGeneratorAddRowsTest(testutil.DeltaGeneratorTestCase):
             get_script_run_ctx().reset()
             self.forward_msg_queue.clear()
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_with_index_no_data_legacy_add_rows(self):
         """Test plain old _legacy_add_rows."""
         all_methods = self._get_unnamed_data_methods()

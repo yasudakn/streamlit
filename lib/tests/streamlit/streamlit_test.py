@@ -13,23 +13,22 @@
 # limitations under the License.
 
 """Streamlit Unit test."""
-from io import BytesIO
-
-from unittest.mock import patch
-import json
-import os
 import io
+import json
+import logging
+import os
 import re
 import sys
-import time
 import textwrap
+import time
 import unittest
-import logging
+from io import BytesIO
+from unittest.mock import patch
 
-from google.protobuf import json_format
 import PIL.Image as Image
 import numpy as np
 import pandas as pd
+from google.protobuf import json_format
 from parameterized import parameterized
 from scipy.io import wavfile
 
@@ -37,13 +36,13 @@ import streamlit as st
 from streamlit import __version__
 from streamlit.errors import StreamlitAPIException
 from streamlit.logger import get_logger
-from streamlit.proto.Empty_pb2 import Empty as EmptyProto
 from streamlit.proto.Alert_pb2 import Alert
-
-from streamlit.in_memory_file_manager import _calculate_file_id
-from streamlit.in_memory_file_manager import in_memory_file_manager
-from streamlit.in_memory_file_manager import STATIC_MEDIA_ENDPOINT
-
+from streamlit.proto.Empty_pb2 import Empty as EmptyProto
+from streamlit.runtime.in_memory_file_manager import (
+    _calculate_file_id,
+    in_memory_file_manager,
+    STATIC_MEDIA_ENDPOINT,
+)
 from tests import testutil
 
 
@@ -75,9 +74,13 @@ class StreamlitTest(unittest.TestCase):
         # This is set in lib/tests/conftest.py to off
         self.assertEqual(True, st.get_option("client.displayEnabled"))
 
-        # client.displayEnabled and client.caching can be set after run starts.
-        st.set_option("client.displayEnabled", False)
-        self.assertEqual(False, st.get_option("client.displayEnabled"))
+        try:
+            # client.displayEnabled and client.caching can be set after run starts.
+            st.set_option("client.displayEnabled", False)
+            self.assertEqual(False, st.get_option("client.displayEnabled"))
+        finally:
+            # Restore original value
+            st.set_option("client.displayEnabled", True)
 
     def test_set_option_unscriptable(self):
         """Test that unscriptable options cannot be set with st.set_option."""
@@ -261,7 +264,7 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
 
     def test_st_audio_options(self):
         """Test st.audio with options."""
-        from streamlit.in_memory_file_manager import _calculate_file_id
+        from streamlit.runtime.in_memory_file_manager import _calculate_file_id
 
         fake_audio_data = "\x11\x22\x33\x44\x55\x66".encode("utf-8")
         st.audio(fake_audio_data, format="audio/mp3", start_time=10)
@@ -374,6 +377,15 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
         self.assertEqual(el.alert.body, "some error")
         self.assertEqual(el.alert.format, Alert.ERROR)
 
+    def test_st_error_with_icon(self):
+        """Test st.error with icon."""
+        st.error("some error", icon="😱")
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.alert.body, "some error")
+        self.assertEqual(el.alert.icon, "😱")
+        self.assertEqual(el.alert.format, Alert.ERROR)
+
     @parameterized.expand([(True,), (False,)])
     def test_st_exception(self, show_error_details: bool):
         """Test st.exception."""
@@ -398,16 +410,17 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
         st.header("some header")
 
         el = self.get_delta_from_queue().new_element
-        self.assertEqual(el.markdown.body, "## some header")
+        self.assertEqual(el.heading.body, "some header")
+        self.assertEqual(el.heading.tag, "h2")
 
     def test_st_header_with_anchor(self):
         """Test st.header with anchor."""
         st.header("some header", anchor="some-anchor")
 
         el = self.get_delta_from_queue().new_element
-        self.assertEqual(
-            el.markdown.body, '<h2 data-anchor="some-anchor">some header</h2>'
-        )
+        self.assertEqual(el.heading.body, "some header")
+        self.assertEqual(el.heading.tag, "h2")
+        self.assertEqual(el.heading.anchor, "some-anchor")
 
     def test_st_help(self):
         """Test st.help."""
@@ -424,12 +437,12 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
             # Python < 3.9 represents the signature slightly differently
             self.assertEqual(
                 el.doc_string.signature,
-                "(body: str, anchor: Union[str, NoneType] = None) -> 'DeltaGenerator'",
+                "(body: object, anchor: Union[str, NoneType] = None) -> 'DeltaGenerator'",
             )
         else:
             self.assertEqual(
                 el.doc_string.signature,
-                "(body: str, anchor: Optional[str] = None) -> 'DeltaGenerator'",
+                "(body: object, anchor: Optional[str] = None) -> 'DeltaGenerator'",
             )
 
     def test_st_image_PIL_image(self):
@@ -524,6 +537,15 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
 
         el = self.get_delta_from_queue().new_element
         self.assertEqual(el.alert.body, "some info")
+        self.assertEqual(el.alert.format, Alert.INFO)
+
+    def test_st_info_with_icon(self):
+        """Test st.info with icon."""
+        st.info("some info", icon="👉🏻")
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.alert.body, "some info")
+        self.assertEqual(el.alert.icon, "👉🏻")
         self.assertEqual(el.alert.format, Alert.INFO)
 
     def test_st_json(self):
@@ -738,16 +760,17 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
         st.subheader("some subheader")
 
         el = self.get_delta_from_queue().new_element
-        self.assertEqual(el.markdown.body, "### some subheader")
+        self.assertEqual(el.heading.body, "some subheader")
+        self.assertEqual(el.heading.tag, "h3")
 
     def test_st_subheader_with_anchor(self):
         """Test st.subheader with anchor."""
         st.subheader("some subheader", anchor="some-anchor")
 
         el = self.get_delta_from_queue().new_element
-        self.assertEqual(
-            el.markdown.body, '<h3 data-anchor="some-anchor">some subheader</h3>'
-        )
+        self.assertEqual(el.heading.body, "some subheader")
+        self.assertEqual(el.heading.tag, "h3")
+        self.assertEqual(el.heading.anchor, "some-anchor")
 
     def test_st_success(self):
         """Test st.success."""
@@ -755,6 +778,15 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
 
         el = self.get_delta_from_queue().new_element
         self.assertEqual(el.alert.body, "some success")
+        self.assertEqual(el.alert.format, Alert.SUCCESS)
+
+    def test_st_success_with_icon(self):
+        """Test st.success with icon."""
+        st.success("some success", icon="✅")
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.alert.body, "some success")
+        self.assertEqual(el.alert.icon, "✅")
         self.assertEqual(el.alert.format, Alert.SUCCESS)
 
     def test_st_legacy_table(self):
@@ -793,16 +825,17 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
         st.title("some title")
 
         el = self.get_delta_from_queue().new_element
-        self.assertEqual(el.markdown.body, "# some title")
+        self.assertEqual(el.heading.body, "some title")
+        self.assertEqual(el.heading.tag, "h1")
 
     def test_st_title_with_anchor(self):
         """Test st.title with anchor."""
         st.title("some title", anchor="some-anchor")
 
         el = self.get_delta_from_queue().new_element
-        self.assertEqual(
-            el.markdown.body, '<h1 data-anchor="some-anchor">some title</h1>'
-        )
+        self.assertEqual(el.heading.body, "some title")
+        self.assertEqual(el.heading.tag, "h1")
+        self.assertEqual(el.heading.anchor, "some-anchor")
 
     def test_st_legacy_vega_lite_chart(self):
         """Test st._legacy_vega_lite_chart."""
@@ -869,7 +902,7 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
     def test_st_video_options(self):
         """Test st.video with options."""
 
-        from streamlit.in_memory_file_manager import _calculate_file_id
+        from streamlit.runtime.in_memory_file_manager import _calculate_file_id
 
         fake_video_data = "\x11\x22\x33\x44\x55\x66".encode("utf-8")
         st.video(fake_video_data, format="video/mp4", start_time=10)
@@ -888,3 +921,18 @@ class StreamlitAPITest(testutil.DeltaGeneratorTestCase):
         el = self.get_delta_from_queue().new_element
         self.assertEqual(el.alert.body, "some warning")
         self.assertEqual(el.alert.format, Alert.WARNING)
+
+    def test_st_warning_with_icon(self):
+        """Test st.warning with icon."""
+        st.warning("some warning", icon="⚠️")
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.alert.body, "some warning")
+        self.assertEqual(el.alert.icon, "⚠️")
+        self.assertEqual(el.alert.format, Alert.WARNING)
+
+    @parameterized.expand([(st.error,), (st.warning,), (st.info,), (st.success,)])
+    def test_st_alert_exceptions(self, alert_func):
+        """Test that alert functions throw an exception when a non-emoji is given as an icon."""
+        with self.assertRaises(StreamlitAPIException):
+            alert_func("some alert", icon="hello world")

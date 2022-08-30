@@ -69,7 +69,7 @@ class LegacyDataFrameProtoTest(unittest.TestCase):
         """Test streamlit.data_frame._get_css_styles.
 
         Need to test the following:
-        * cell_selector_regex isnt found
+        * cell_selector_regex isn't found
         * cell_style['props'] isn't a list
         * cell_style['props'] does not equal 2
         * style has name and value
@@ -98,6 +98,7 @@ class LegacyDataFrameProtoTest(unittest.TestCase):
         with self.assertRaises(StreamlitAPIException):
             data_frame.marshall_data_frame(pa.Table.from_pandas(df), proto)
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_marshall_index(self):
         """Test streamlit.data_frame._marshall_index."""
         df = pd.DataFrame(data={"col1": [1, 2], "col2": [3, 4]})
@@ -182,6 +183,7 @@ class LegacyDataFrameProtoTest(unittest.TestCase):
         truth = [["1", "2"], ["3", "4"]]
         self.assertEqual(ret, truth)
 
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def test_marshall_any_array(self):
         """Test streamlit.data_frame._marshall_any_array."""
         # list

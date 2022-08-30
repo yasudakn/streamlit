@@ -19,16 +19,11 @@ import streamlit
 from streamlit import type_util
 from streamlit.elements.form import is_in_form
 from streamlit.errors import StreamlitAPIException
-from streamlit.state import get_session_state, WidgetCallback
+from streamlit.runtime.state import get_session_state, WidgetCallback
 
 if TYPE_CHECKING:
     from streamlit.delta_generator import DeltaGenerator
-    from streamlit.type_util import DataFrameCompatible, SupportsStr
-
-
-def clean_text(text: "SupportsStr") -> str:
-    """Convert an object to text, dedent it, and strip whitespace."""
-    return textwrap.dedent(str(text)).strip()
+    from streamlit.type_util import DataFrameCompatible
 
 
 def last_index_for_melted_dataframes(

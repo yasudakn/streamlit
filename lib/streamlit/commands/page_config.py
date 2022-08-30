@@ -14,11 +14,11 @@
 from typing import Mapping
 from urllib.parse import urlparse
 from textwrap import dedent
-from typing import cast, Dict, Optional, TYPE_CHECKING, Union
+from typing import cast, Optional, TYPE_CHECKING, Union
 
 from typing_extensions import Final, Literal, TypeAlias
 
-from streamlit.scriptrunner import get_script_run_ctx
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 from streamlit.proto.ForwardMsg_pb2 import ForwardMsg as ForwardProto
 from streamlit.proto.PageConfig_pb2 import PageConfig as PageConfigProto
 from streamlit.elements import image
@@ -89,6 +89,7 @@ def set_page_config(
             A markdown string to show in the About dialog.
             If None, only shows Streamlit's default About text.
 
+        The URL may also refer to an email address e.g. ``mailto:john@example.com``.
 
     Example
     -------
@@ -241,6 +242,8 @@ def valid_url(url: str) -> bool:
     """
     try:
         result = urlparse(url)
+        if result.scheme == "mailto":
+            return all([result.scheme, result.path])
         return all([result.scheme, result.netloc])
     except:
         return False
