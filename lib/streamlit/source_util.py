@@ -46,6 +46,7 @@ def open_python_file(filename):
 
 PAGE_FILENAME_REGEX = re.compile(r"([0-9]*)[_ -]*(.*)\.py")
 
+
 def page_sort_key(script_path: Path) -> Tuple[float, str]:
     matches = re.findall(PAGE_FILENAME_REGEX, script_path.name)
 
