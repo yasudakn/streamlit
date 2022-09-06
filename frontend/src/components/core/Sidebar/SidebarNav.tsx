@@ -19,11 +19,7 @@ import React, { ReactElement, useCallback, useRef, useState } from "react"
 // We import react-device-detect in this way so that tests can mock its
 // isMobile field sanely.
 import * as reactDeviceDetect from "react-device-detect"
-import {
-  ExpandMore,
-  ExpandLess,
-  Description,
-} from "@emotion-icons/material-outlined"
+import { ExpandMore, ExpandLess } from "@emotion-icons/material-outlined"
 
 import { IAppPage } from "src/autogen/proto"
 import AppContext from "src/components/core/AppContext"
@@ -61,7 +57,7 @@ const SidebarNav = ({
     return null
   }
 
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const navItemsRef = useRef<HTMLUListElement>(null)
   const isOverflowing = useIsOverflowing(navItemsRef)
   // We use React.useContext here instead of destructuring it in the imports

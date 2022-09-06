@@ -185,6 +185,54 @@ class Sidebar extends PureComponent<SidebarProps, State> {
     this.setState({ hideScrollbar: newValue })
   }
 
+  getImageNode = (children: ReactElement): ReactElement[] => {
+    const ret = this.recursiveFilteringImage(children)
+    // console.log(ret)
+    return ret
+  }
+
+  excludeImageNode = (children: ReactElement): ReactElement[] => {
+    const ret = this.recursiveFilteringImage(children, true)
+    // console.log(ret)
+    return ret
+  }
+
+  recursiveFilteringImage = (
+    children: ReactElement,
+    exclude = false
+  ): any[] => {
+    return React.Children.map(children, child => {
+      if (!React.isValidElement(child)) {
+        return child
+      }
+
+      if ((child as ReactElement).props.children) {
+        const props = {
+          children: this.recursiveFilteringImage(
+            (child as ReactElement).props.children,
+            exclude
+          ),
+        }
+        child = React.cloneElement(child, props)
+      } else if ((child as ReactElement).props.node.children) {
+        // console.log("array node")
+        const arr: Array<any> = (child as ReactElement).props.node.children
+        const filterProps = {
+          node: {
+            children: arr.filter(c => {
+              if (exclude) {
+                return c.element.imgs === null || c.element.imgs === undefined
+              }
+              return c.element.imgs
+            }),
+          },
+        }
+        child = React.cloneElement(child, filterProps)
+      }
+      return child
+    })
+  }
+
   // BUG(tvst): X button should have same color as hamburger.
   // BUG(tvst): X and > buttons should have same margins as hamburger.
   public render(): ReactNode {
@@ -253,6 +301,7 @@ class Sidebar extends PureComponent<SidebarProps, State> {
                 <Icon content={Close} size="lg" />
               </Button>
             </StyledSidebarCloseButton>
+            {children && this.getImageNode(children)}
             {!hideSidebarNav && (
               <SidebarNav
                 appPages={appPages}
@@ -265,7 +314,7 @@ class Sidebar extends PureComponent<SidebarProps, State> {
               />
             )}
             <StyledSidebarUserContent hasPageNavAbove={hasPageNavAbove}>
-              {children}
+              {children && this.excludeImageNode(children)}
             </StyledSidebarUserContent>
           </StyledSidebarContent>
         </Resizable>
