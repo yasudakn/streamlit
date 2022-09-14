@@ -301,7 +301,9 @@ class Sidebar extends PureComponent<SidebarProps, State> {
                 <Icon content={Close} size="lg" />
               </Button>
             </StyledSidebarCloseButton>
-            {children && this.getImageNode(children)}
+            <StyledSidebarUserContent hasPageNavAbove={false}>
+              {children && this.getImageNode(children)}
+            </StyledSidebarUserContent>
             {!hideSidebarNav && (
               <SidebarNav
                 appPages={appPages}
