@@ -15,7 +15,7 @@
 import re
 import threading
 from pathlib import Path
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 from blinker import Signal
 
@@ -141,7 +141,7 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
 
         parent_dirs = []
         for script_path in page_scripts:
-            parent = re.search(r'pages/(.+)', str(script_path.parent))
+            parent = re.search(r"pages/(.+)", str(script_path.parent))
             if parent:
                 pn = parent.group(1)
                 if 0 < len(pn) and not pn in parent_dirs:

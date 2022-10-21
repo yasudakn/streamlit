@@ -17,7 +17,7 @@
 import { IAppPage } from "src/autogen/proto"
 import { ExportedTheme } from "src/theme"
 
-export type StreamlitShareMetadata = {
+export type DeployedAppMetadata = {
   hostedAt?: string
   creatorId?: string
   owner?: string
@@ -27,7 +27,9 @@ export type StreamlitShareMetadata = {
   isOwner?: boolean
 }
 
-export interface S4ACommunicationState {
+export interface HostCommunicationState {
+  authToken?: string
+  deployedAppMetadata: DeployedAppMetadata
   forcedModalClose: boolean
   hideSidebarNav: boolean
   isOwner: boolean
@@ -36,7 +38,6 @@ export interface S4ACommunicationState {
   queryParams: string
   requestedPageScriptHash: string | null
   sidebarChevronDownshift: number
-  streamlitShareMetadata: StreamlitShareMetadata
   toolbarItems: IToolbarItem[]
 }
 
@@ -68,6 +69,10 @@ export type IHostToGuestMessage = {
       pageScriptHash: string
     }
   | {
+      type: "SET_AUTH_TOKEN"
+      authToken: string
+    }
+  | {
       type: "SET_IS_OWNER"
       isOwner: boolean
     }
@@ -77,7 +82,7 @@ export type IHostToGuestMessage = {
     }
   | {
       type: "SET_METADATA"
-      metadata: StreamlitShareMetadata
+      metadata: DeployedAppMetadata
     }
   | {
       type: "SET_PAGE_LINK_BASE_URL"
@@ -145,6 +150,9 @@ export type IGuestToHostMessage =
   | {
       type: "UPDATE_HASH"
       hash: string
+    }
+  | {
+      type: "WEBSOCKET_DISCONNECTED"
     }
 
 export type VersionedMessage<Message> = {

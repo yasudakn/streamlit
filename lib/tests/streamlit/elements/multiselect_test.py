@@ -14,7 +14,8 @@
 
 """multiselect unit tests."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
 from parameterized import parameterized
@@ -26,10 +27,10 @@ from streamlit.elements.multiselect import (
 )
 from streamlit.errors import StreamlitAPIException
 from streamlit.proto.LabelVisibilityMessage_pb2 import LabelVisibilityMessage
-from tests import testutil
+from tests.delta_generator_test_case import DeltaGeneratorTestCase
 
 
-class Multiselectbox(testutil.DeltaGeneratorTestCase):
+class Multiselectbox(DeltaGeneratorTestCase):
     """Test ability to marshall multiselect protos."""
 
     def test_just_label(self):
@@ -219,7 +220,7 @@ class Multiselectbox(testutil.DeltaGeneratorTestCase):
         proto = self.get_delta_from_queue().new_element.multiselect
         self.assertEqual(proto.form_id, "")
 
-    @patch("streamlit._is_running_with_streamlit", new=True)
+    @patch("streamlit.runtime.Runtime.exists", MagicMock(return_value=True))
     def test_inside_form(self):
         """Test that form id is marshalled correctly inside of a form."""
 
@@ -268,11 +269,11 @@ class Multiselectbox(testutil.DeltaGeneratorTestCase):
     def test_label_visibility_wrong_value(self):
         with self.assertRaises(StreamlitAPIException) as e:
             st.multiselect("the label", ("m", "f"), label_visibility="wrong_value")
-            self.assertEquals(
-                str(e),
-                "Unsupported label_visibility option 'wrong_value'. Valid values are "
-                "'visible', 'hidden' or 'collapsed'.",
-            )
+        self.assertEquals(
+            str(e.exception),
+            "Unsupported label_visibility option 'wrong_value'. Valid values are "
+            "'visible', 'hidden' or 'collapsed'.",
+        )
 
     def test_max_selections(self):
         st.multiselect("the label", ("m", "f"), max_selections=2)

@@ -76,8 +76,7 @@ const themeBuilder: Record<string, ThemeOptionBuilder> = {
     getValue: valueToColor,
   },
   secondaryBackgroundColor: {
-    help:
-      "Background color used for the sidebar and most interactive widgets.",
+    help: "Background color used for the sidebar and most interactive widgets.",
     title: "Secondary background color",
     component: ColorPicker,
     getValue: valueToColor,
@@ -306,7 +305,7 @@ const ThemeCreatorDialog = (props: Props): ReactElement => {
             </StyledSmall>
 
             <div>
-              <Button onClick={copyConfig} kind={Kind.PRIMARY}>
+              <Button onClick={copyConfig} kind={Kind.SECONDARY}>
                 {copied ? (
                   <React.Fragment>
                     {"Copied to clipboard "}

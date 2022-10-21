@@ -29,6 +29,7 @@ import {
   StyledSidebarNavContainer,
   StyledSidebarNavItems,
   StyledSidebarNavLink,
+  StyledSidebarLinkText,
   StyledSidebarNavLinkContainer,
   StyledSidebarNavSeparatorContainer,
 } from "./styled-components"
@@ -69,9 +70,10 @@ const SidebarNav = ({
     }
   }, [isOverflowing, hideParentScrollbar])
 
-  const onMouseOut = useCallback(() => hideParentScrollbar(false), [
-    hideParentScrollbar,
-  ])
+  const onMouseOut = useCallback(
+    () => hideParentScrollbar(false),
+    [hideParentScrollbar]
+  )
 
   const toggleExpanded = useCallback(() => {
     if (!expanded && isOverflowing) {
@@ -117,6 +119,9 @@ const SidebarNav = ({
               pageUrl = `${protocol}//${host}${portSection}/${basePathSection}${navigateTo}`
             }
 
+            const tooltipContent = pageName.replace(/_/g, " ")
+            const isActive = pageScriptHash === currentPageScriptHash
+
             return (
               <li key={pageName}>
                 <StyledSidebarNavLinkContainer>
@@ -126,7 +131,7 @@ const SidebarNav = ({
                     </span>
                   ) : (
                     <StyledSidebarNavLink
-                      isActive={pageScriptHash === currentPageScriptHash}
+                      isActive={isActive}
                       href={pageUrl}
                       onClick={e => {
                         e.preventDefault()
@@ -139,7 +144,9 @@ const SidebarNav = ({
                       {pageIcon && pageIcon.length && (
                         <EmojiIcon size="lg">{pageIcon}</EmojiIcon>
                       )}
-                      <span>{pageName.replace(/_/g, " ")}</span>
+                      <StyledSidebarLinkText isActive={isActive}>
+                        {tooltipContent}
+                      </StyledSidebarLinkText>
                     </StyledSidebarNavLink>
                   )}
                 </StyledSidebarNavLinkContainer>

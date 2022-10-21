@@ -16,11 +16,11 @@
 
 import pandas as pd
 
-from tests import testutil
 import streamlit as st
+from tests.delta_generator_test_case import DeltaGeneratorTestCase
 
 
-class ArrowDataFrameDimensionsTest(testutil.DeltaGeneratorTestCase):
+class ArrowDataFrameDimensionsTest(DeltaGeneratorTestCase):
     """Test the metadata in the serialized delta message for the different
     dimension specifier options.
     """

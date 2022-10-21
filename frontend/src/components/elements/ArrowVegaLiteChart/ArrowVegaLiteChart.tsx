@@ -18,6 +18,7 @@ import React, { PureComponent } from "react"
 import { withTheme } from "@emotion/react"
 import embed from "vega-embed"
 import * as vega from "vega"
+import { expressionInterpreter } from "vega-interpreter"
 
 import { logMessage } from "src/lib/log"
 import withFullScreenWrapper from "src/hocs/withFullScreenWrapper"
@@ -271,10 +272,8 @@ export class ArrowVegaLiteChart extends PureComponent<PropsWithHeight, State> {
       return
     }
 
-    const {
-      dataRows: prevNumRows,
-      dataColumns: prevNumCols,
-    } = prevData.dimensions
+    const { dataRows: prevNumRows, dataColumns: prevNumCols } =
+      prevData.dimensions
     const { dataRows: numRows, dataColumns: numCols } = data.dimensions
 
     // Check if dataframes have same "shape" but the new one has more rows.
@@ -319,9 +318,14 @@ export class ArrowVegaLiteChart extends PureComponent<PropsWithHeight, State> {
 
     const el = this.props.element
     const spec = this.generateSpec()
-    const { vgSpec, view, finalize } = await embed(this.element, spec, {
+    const options = {
       defaultStyle: true,
-    })
+      // Adds interpreter support for Vega expressions that is compliant with CSP
+      ast: true,
+      expr: expressionInterpreter,
+    }
+
+    const { vgSpec, view, finalize } = await embed(this.element, spec, options)
 
     this.vegaView = view
     this.vegaFinalizer = finalize

@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import os
-import setuptools
 import sys
 from pathlib import Path
 
+import setuptools
 from setuptools.command.install import install
 
 THIS_DIRECTORY = Path(__file__).parent
@@ -39,8 +39,7 @@ INSTALL_REQUIRES = [
     "packaging>=14.1",
     "pandas>=0.21.0",
     "pillow>=6.2.0",
-    # protobuf 3.20.2 is broken: https://github.com/protocolbuffers/protobuf/issues/10571
-    "protobuf<4,>=3.12,!=3.20.2",
+    "protobuf<4,>=3.12",
     "pyarrow>=4.0",
     "pydeck>=0.1.dev5",
     "pympler>=0.9",
@@ -80,7 +79,7 @@ class VerifyVersionCommand(install):
     description = "verify that the git tag matches our version"
 
     def run(self):
-        tag = os.getenv("CIRCLE_TAG")
+        tag = os.getenv("TAG")
 
         if tag != VERSION:
             info = "Git tag: {0} does not match the version of this app: {1}".format(
@@ -89,11 +88,21 @@ class VerifyVersionCommand(install):
             sys.exit(info)
 
 
+readme_path = THIS_DIRECTORY / ".." / "README.md"
+if readme_path.exists():
+    long_description = readme_path.read_text()
+else:
+    # In some build environments (specifically in conda), we may not have the README file
+    # readily available. In these cases, just let long_description be the empty string.
+    # Note that long_description isn't used at all in these build environments, so it
+    # being missing isn't problematic.
+    long_description = ""
+
 setuptools.setup(
     name=NAME,
     version=VERSION,
     description="The fastest way to build data apps in Python",
-    long_description=(THIS_DIRECTORY / ".." / "README.md").read_text(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://streamlit.io",
     project_urls={
@@ -104,7 +113,7 @@ setuptools.setup(
         "Community": "https://discuss.streamlit.io/",
         "Twitter": "https://twitter.com/streamlit",
     },
-    author="Streamlit Inc",
+    author="Snowflake Inc",
     author_email="hello@streamlit.io",
     license="Apache License 2.0",
     classifiers=[

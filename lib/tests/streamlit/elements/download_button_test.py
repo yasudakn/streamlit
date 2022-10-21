@@ -14,13 +14,13 @@
 
 """download_button unit test."""
 
-import streamlit as st
-
 from parameterized import parameterized
-from tests import testutil
+
+import streamlit as st
+from tests.delta_generator_test_case import DeltaGeneratorTestCase
 
 
-class DownloadButtonTest(testutil.DeltaGeneratorTestCase):
+class DownloadButtonTest(DeltaGeneratorTestCase):
     """Test ability to marshall download_button protos."""
 
     @parameterized.expand([("hello world",), (b"byteshere",)])

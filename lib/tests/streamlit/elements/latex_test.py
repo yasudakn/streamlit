@@ -14,11 +14,11 @@
 
 """LaTeX unit test."""
 
-from tests import testutil
 import streamlit as st
+from tests.delta_generator_test_case import DeltaGeneratorTestCase
 
 
-class LatexTest(testutil.DeltaGeneratorTestCase):
+class LatexTest(DeltaGeneratorTestCase):
     """Test ability to marshall latex protos."""
 
     def test_latex(self):

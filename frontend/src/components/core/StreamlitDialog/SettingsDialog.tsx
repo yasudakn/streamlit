@@ -71,7 +71,7 @@ export class SettingsDialog extends PureComponent<Props, UserSettings> {
   private renderThemeCreatorButton = (): ReactElement | false =>
     this.props.developerMode && (
       <div>
-        <Button onClick={this.props.openThemeCreator} kind={Kind.PRIMARY}>
+        <Button onClick={this.props.openThemeCreator} kind={Kind.SECONDARY}>
           Edit active theme
         </Button>
       </div>
@@ -172,10 +172,8 @@ export class SettingsDialog extends PureComponent<Props, UserSettings> {
   }
 
   private handleThemeChange = (index: number): void => {
-    const {
-      activeTheme: oldTheme,
-      availableThemes,
-    }: AppContextProps = this.context
+    const { activeTheme: oldTheme, availableThemes }: AppContextProps =
+      this.context
     const newTheme = availableThemes[index]
 
     MetricsManager.current.enqueue("themeChanged", {

@@ -14,24 +14,20 @@
 
 """slider unit test."""
 
-from unittest.mock import patch
+from datetime import date, datetime, time, timedelta, timezone
+from unittest.mock import MagicMock, patch
+
 import pytest
 from parameterized import parameterized
 
 import streamlit as st
 from streamlit.errors import StreamlitAPIException
-from streamlit.proto.LabelVisibilityMessage_pb2 import LabelVisibilityMessage
 from streamlit.js_number import JSNumber
-from tests import testutil
-
-from datetime import date
-from datetime import datetime
-from datetime import time
-from datetime import timedelta
-from datetime import timezone
+from streamlit.proto.LabelVisibilityMessage_pb2 import LabelVisibilityMessage
+from tests.delta_generator_test_case import DeltaGeneratorTestCase
 
 
-class SliderTest(testutil.DeltaGeneratorTestCase):
+class SliderTest(DeltaGeneratorTestCase):
     """Test ability to marshall slider protos."""
 
     def test_just_label(self):
@@ -220,7 +216,7 @@ class SliderTest(testutil.DeltaGeneratorTestCase):
         proto = self.get_delta_from_queue().new_element.slider
         self.assertEqual(proto.form_id, "")
 
-    @patch("streamlit._is_running_with_streamlit", new=True)
+    @patch("streamlit.runtime.Runtime.exists", MagicMock(return_value=True))
     def test_inside_form(self):
         """Test that form id is marshalled correctly inside of a form."""
 
@@ -266,8 +262,8 @@ class SliderTest(testutil.DeltaGeneratorTestCase):
     def test_label_visibility_wrong_value(self):
         with self.assertRaises(StreamlitAPIException) as e:
             st.slider("the label", label_visibility="wrong_value")
-            self.assertEquals(
-                str(e),
-                "Unsupported label_visibility option 'wrong_value'. Valid values are "
-                "'visible', 'hidden' or 'collapsed'.",
-            )
+        self.assertEquals(
+            str(e.exception),
+            "Unsupported label_visibility option 'wrong_value'. Valid values are "
+            "'visible', 'hidden' or 'collapsed'.",
+        )

@@ -26,35 +26,38 @@ import {
   IMenuItem,
   IToolbarItem,
   VersionedMessage,
-  S4ACommunicationState,
+  HostCommunicationState,
 } from "./types"
 
-export interface S4ACommunicationHOC {
-  currentState: S4ACommunicationState
+export interface HostCommunicationHOC {
+  currentState: HostCommunicationState
   connect: () => void
   sendMessage: (message: IGuestToHostMessage) => void
   onModalReset: () => void
   onPageChanged: () => void
 }
 
-export const S4A_COMM_VERSION = 1
+export const HOST_COMM_VERSION = 1
 
-export function sendS4AMessage(message: IGuestToHostMessage): void {
+export function sendMessageToHost(message: IGuestToHostMessage): void {
   window.parent.postMessage(
     {
-      stCommVersion: S4A_COMM_VERSION,
+      stCommVersion: HOST_COMM_VERSION,
       ...message,
     } as VersionedMessage<IGuestToHostMessage>,
     "*"
   )
 }
 
-function withS4ACommunication(
+function withHostCommunication(
   WrappedComponent: ComponentType<any>
 ): ComponentType<any> {
-  function ComponentWithS4ACommunication(props: any): ReactElement {
+  function ComponentWithHostCommunication(props: any): ReactElement {
     // TODO(vdonato): Refactor this to use useReducer to make this less
-    // unwieldy.
+    // unwieldy. We may want to consider installing the redux-toolkit package
+    // even if we're not using redux just because it's so useful for reducing
+    // this type of boilerplate.
+    const [authToken, setAuthToken] = useState<string | undefined>(undefined)
     const [forcedModalClose, setForcedModalClose] = useState(false)
     const [hideSidebarNav, setHideSidebarNav] = useState(false)
     const [isOwner, setIsOwner] = useState(false)
@@ -65,7 +68,7 @@ function withS4ACommunication(
       string | null
     >(null)
     const [sidebarChevronDownshift, setSidebarChevronDownshift] = useState(0)
-    const [streamlitShareMetadata, setStreamlitShareMetadata] = useState({})
+    const [deployedAppMetadata, setDeployedAppMetadata] = useState({})
     const [toolbarItems, setToolbarItems] = useState<IToolbarItem[]>([])
 
     useEffect(() => {
@@ -83,7 +86,7 @@ function withS4ACommunication(
 
         if (
           !origin ||
-          message.stCommVersion !== S4A_COMM_VERSION ||
+          message.stCommVersion !== HOST_COMM_VERSION ||
           !CLOUD_COMM_WHITELIST.find(el => isValidURL(el, origin))
         ) {
           return
@@ -97,6 +100,10 @@ function withS4ACommunication(
           setRequestedPageScriptHash(message.pageScriptHash)
         }
 
+        if (message.type === "SET_AUTH_TOKEN") {
+          setAuthToken(message.authToken)
+        }
+
         if (message.type === "SET_IS_OWNER") {
           setIsOwner(message.isOwner)
         }
@@ -106,7 +113,7 @@ function withS4ACommunication(
         }
 
         if (message.type === "SET_METADATA") {
-          setStreamlitShareMetadata(message.metadata)
+          setDeployedAppMetadata(message.metadata)
         }
 
         if (message.type === "SET_PAGE_LINK_BASE_URL") {
@@ -143,9 +150,10 @@ function withS4ACommunication(
 
     return (
       <WrappedComponent
-        s4aCommunication={
+        hostCommunication={
           {
             currentState: {
+              authToken,
               forcedModalClose,
               hideSidebarNav,
               isOwner,
@@ -154,11 +162,11 @@ function withS4ACommunication(
               queryParams,
               requestedPageScriptHash,
               sidebarChevronDownshift,
-              streamlitShareMetadata,
+              deployedAppMetadata,
               toolbarItems,
             },
             connect: () => {
-              sendS4AMessage({
+              sendMessageToHost({
                 type: "GUEST_READY",
               })
             },
@@ -168,20 +176,21 @@ function withS4ACommunication(
             onPageChanged: () => {
               setRequestedPageScriptHash(null)
             },
-            sendMessage: sendS4AMessage,
-          } as S4ACommunicationHOC
+            sendMessage: sendMessageToHost,
+          } as HostCommunicationHOC
         }
         {...props}
       />
     )
   }
 
-  ComponentWithS4ACommunication.displayName = `withS4ACommunication(${WrappedComponent.displayName ||
-    WrappedComponent.name})`
+  ComponentWithHostCommunication.displayName = `withHostCommunication(${
+    WrappedComponent.displayName || WrappedComponent.name
+  })`
 
   // Static methods must be copied over
   // https://en.reactjs.org/docs/higher-order-components.html#static-methods-must-be-copied-over
-  return hoistNonReactStatics(ComponentWithS4ACommunication, WrappedComponent)
+  return hoistNonReactStatics(ComponentWithHostCommunication, WrappedComponent)
 }
 
-export default withS4ACommunication
+export default withHostCommunication
