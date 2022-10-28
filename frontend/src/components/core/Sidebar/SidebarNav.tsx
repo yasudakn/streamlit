@@ -31,6 +31,7 @@ import {
   StyledSidebarNavLink,
   StyledSidebarNavLinkContainer,
   StyledSidebarNavSeparatorContainer,
+  StyledSidebarNavMajorClass,
 } from "./styled-components"
 
 export interface Props {
@@ -121,9 +122,9 @@ const SidebarNav = ({
               <li key={pageName}>
                 <StyledSidebarNavLinkContainer>
                   {majorClass ? (
-                    <span className="major-class">
+                    <StyledSidebarNavMajorClass>
                       {pageName.replace(/_/g, " ")}
-                    </span>
+                    </StyledSidebarNavMajorClass>
                   ) : (
                     <StyledSidebarNavLink
                       isActive={pageScriptHash === currentPageScriptHash}
