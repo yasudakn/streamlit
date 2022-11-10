@@ -152,7 +152,7 @@ def get_pages(main_script_path_str: str) -> Dict[str, Dict[str, str]]:
                         "page_script_hash": psh,
                         "page_name": pn,
                         "icon": pi,
-                        "major_class": 1,
+                        "major_class": "true",
                         "script_path": str(script_path.parent.resolve()),
                     }
 
