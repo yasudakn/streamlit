@@ -224,35 +224,35 @@ describe("SidebarNav", () => {
     ).toBe(true)
   })
 
-  it("renders ExpandLess icon when not expanded and overflowing", () => {
-    mockUseIsOverflowing.mockReturnValueOnce(true)
+  it("renders ExpandMore icon when not expanded and overflowing", () => {
+    mockUseIsOverflowing.mockReturnValueOnce(false)
     const wrapper = shallow(
       <SidebarNav {...getProps({ hasSidebarElements: true })} />
     )
 
     expect(
       wrapper.find(StyledSidebarNavSeparatorContainer).find(Icon).props()
-    ).toHaveProperty("content", ExpandLess)
+    ).toHaveProperty("content", ExpandMore)
   })
 
   it("renders ExpandLess icon when expanded and not overflowing", () => {
     // We need to have useIsOverflowing return true once so that we can click
     // on the separator to expand the nav component. After this click, it
     // returns false.
-    mockUseIsOverflowing.mockReturnValueOnce(false)
+    mockUseIsOverflowing.mockReturnValueOnce(true)
     const wrapper = shallow(
       <SidebarNav {...getProps({ hasSidebarElements: true })} />
     )
 
-    // wrapper.find(StyledSidebarNavSeparatorContainer).prop("onClick")!(
-    //   mockClickEvent
-    // )
+    wrapper.find(StyledSidebarNavSeparatorContainer).prop("onClick")!(
+      mockClickEvent
+    )
     expect(
       wrapper.find(StyledSidebarNavSeparatorContainer).find(Icon).props()
     ).toHaveProperty("content", ExpandLess)
   })
 
-  it("renders ExpandMore icon when expanded and overflowing", () => {
+  it("renders ExpandLess icon when expanded and overflowing", () => {
     // Have useIsOverflowing return true both before and after the nav is
     // expanded.
     mockUseIsOverflowing.mockReturnValueOnce(true).mockReturnValueOnce(true)
@@ -265,7 +265,7 @@ describe("SidebarNav", () => {
     )
     expect(
       wrapper.find(StyledSidebarNavSeparatorContainer).find(Icon).props()
-    ).toHaveProperty("content", ExpandMore)
+    ).toHaveProperty("content", ExpandLess)
   })
 
   it("changes cursor to pointer above separator when overflowing", () => {
@@ -290,7 +290,7 @@ describe("SidebarNav", () => {
     expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(true)
     expect(wrapper.find("StyledSidebarNavItems")).toHaveStyleRule(
       "max-height",
-      "75vh"
+      "33vh"
     )
   })
 
@@ -323,7 +323,7 @@ describe("SidebarNav", () => {
     expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(false)
     expect(wrapper.find(StyledSidebarNavItems)).toHaveStyleRule(
       "max-height",
-      "33vh"
+      "75vh"
     )
 
     act(() => {
@@ -333,7 +333,7 @@ describe("SidebarNav", () => {
     })
     wrapper.update()
 
-    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(false)
+    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(true)
     expect(wrapper.find(StyledSidebarNavItems)).toHaveStyleRule(
       "max-height",
       "33vh"
