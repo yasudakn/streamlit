@@ -215,17 +215,17 @@ describe("SidebarNav", () => {
     )
   })
 
-  it("does not render an icon when not expanded and not overflowing", () => {
+  it("render an icon when not expanded and not overflowing", () => {
     const wrapper = shallow(
       <SidebarNav {...getProps({ hasSidebarElements: true })} />
     )
     expect(
       wrapper.find(StyledSidebarNavSeparatorContainer).find(Icon).exists()
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it("renders ExpandMore icon when not expanded and overflowing", () => {
-    mockUseIsOverflowing.mockReturnValueOnce(true)
+    mockUseIsOverflowing.mockReturnValueOnce(false)
     const wrapper = shallow(
       <SidebarNav {...getProps({ hasSidebarElements: true })} />
     )
@@ -287,7 +287,7 @@ describe("SidebarNav", () => {
       <SidebarNav {...getProps({ hasSidebarElements: true })} />
     )
 
-    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(false)
+    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(true)
     expect(wrapper.find("StyledSidebarNavItems")).toHaveStyleRule(
       "max-height",
       "33vh"
@@ -320,7 +320,7 @@ describe("SidebarNav", () => {
     })
     wrapper.update()
 
-    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(true)
+    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(false)
     expect(wrapper.find(StyledSidebarNavItems)).toHaveStyleRule(
       "max-height",
       "75vh"
@@ -333,7 +333,7 @@ describe("SidebarNav", () => {
     })
     wrapper.update()
 
-    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(false)
+    expect(wrapper.find(StyledSidebarNavItems).prop("isExpanded")).toBe(true)
     expect(wrapper.find(StyledSidebarNavItems)).toHaveStyleRule(
       "max-height",
       "33vh"

@@ -119,7 +119,7 @@ describe("Sidebar Component", () => {
 
     expect(wrapper.find("StyledSidebarUserContent")).toHaveStyleRule(
       "padding-top",
-      "6rem"
+      "4rem"
     )
   })
 
