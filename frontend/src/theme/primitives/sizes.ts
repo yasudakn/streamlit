@@ -17,7 +17,7 @@
 export const sizes = {
   full: "100%",
   headerHeight: "2.875rem",
-  sidebarTopSpace: "6rem",
+  sidebarTopSpace: "4rem",
   sidebar: "21rem",
   contentMaxWidth: "46rem",
 }

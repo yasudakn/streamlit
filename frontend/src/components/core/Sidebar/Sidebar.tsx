@@ -31,6 +31,7 @@ import {
   StyledSidebarCollapsedControl,
   StyledSidebarUserContent,
   StyledResizeHandle,
+  StyledSidebarHeaderLogo,
 } from "./styled-components"
 import IsSidebarContext from "./IsSidebarContext"
 import SidebarNav from "./SidebarNav"
@@ -295,9 +296,9 @@ class Sidebar extends PureComponent<SidebarProps, State> {
                 <Icon content={Close} size="lg" />
               </Button>
             </StyledSidebarCloseButton>
-            <StyledSidebarUserContent hasPageNavAbove={false}>
+            <StyledSidebarHeaderLogo>
               {children && this.getImageNode(children)}
-            </StyledSidebarUserContent>
+            </StyledSidebarHeaderLogo>
             {!hideSidebarNav && (
               <SidebarNav
                 appPages={appPages}
