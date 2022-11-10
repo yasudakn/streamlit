@@ -89,7 +89,14 @@ jobs:
         with:
           name: cypress_snapshots
           path: frontend/cypress/snapshots
-
+      - name: Download Snapshots
+        uses: actions/download-artifact@v3
+        with:
+          name: cypress_snapshots
+      - name: 'Echo download path'
+        run: echo ${{steps.test.outputs.download-path}}
+      - name: Display structure of downloaded files
+        run: ls -R
   cypress_summary:
     runs-on: ubuntu-latest
 
