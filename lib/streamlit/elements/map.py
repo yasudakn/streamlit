@@ -96,7 +96,7 @@ class MapMixin:
 
         Parameters
         ----------
-        data : pandas.DataFrame, pandas.Styler, pyarrow.Table, numpy.ndarray, snowflake.snowpark.dataframe.DataFrame, snowflake.snowpark.table.Table, Iterable, dict,
+        data : pandas.DataFrame, pandas.Styler, pyarrow.Table, numpy.ndarray, pyspark.sql.DataFrame, snowflake.snowpark.dataframe.DataFrame, snowflake.snowpark.table.Table, Iterable, dict,
             or None
             The data to be plotted. Must have columns called 'lat', 'lon',
             'latitude', or 'longitude'.
@@ -164,7 +164,7 @@ def to_deckgl_json(data: Data, zoom: Optional[int]) -> str:
     # TODO(harahu): The ignore statement here is because iterables don't have
     #  the empty attribute. This is either a bug, or the documented data type
     #  is too broad. One or the other should be addressed, and the ignore
-    if hasattr(data, "empty") and data.empty:  # type: ignore
+    if hasattr(data, "empty") and data.empty:
         return json.dumps(_DEFAULT_MAP)
 
     data = type_util.convert_anything_to_df(data)
