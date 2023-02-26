@@ -49,6 +49,16 @@ export const StyledSidebar = styled.section<StyledSidebarProps>(
           isCollapsed ? "transparent" : "#00000029"
         }`,
       },
+
+      [`@media print`]: {
+        backgroundColor: "transparent",
+        margin: "auto",
+        boxShadow: "none",
+        maxWidth: "none",
+        minWidth: "100%",
+        width: "100% !important",
+        paddingTop: "1rem",
+      },
     }
   }
 )
@@ -80,6 +90,10 @@ export const StyledSidebarNavItems = styled.ul<StyledSidebarNavItemsProps>(
       margin: 0,
       paddingTop: theme.sizes.sidebarTopSpace,
       paddingBottom: theme.spacing.lg,
+
+      "@media print": {
+        paddingTop: theme.spacing.sm,
+      },
 
       "&::before": isOverflowing
         ? {
@@ -206,6 +220,10 @@ export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
       "&:focus-visible": {
         backgroundColor: theme.colors.darkenedBgMix15,
       },
+
+      [`@media print`]: {
+        paddingLeft: theme.spacing.none,
+      },
     }
   }
 )
@@ -238,6 +256,10 @@ export const StyledSidebarUserContent =
     paddingBottom: theme.spacing.twoXL,
     paddingLeft: theme.spacing.lg,
     paddingRight: theme.spacing.lg,
+
+    "@media print": {
+      paddingTop: `1rem`,
+    },
 
     "& h1": {
       fontSize: theme.fontSizes.xl,
@@ -292,6 +314,10 @@ export const StyledSidebarCloseButton = styled.div(({ theme }) => ({
   "&:hover button": {
     backgroundColor: transparentize(theme.colors.fadedText60, 0.5),
   },
+
+  [`@media print`]: {
+    display: "none",
+  },
 }))
 
 export interface StyledSidebarCollapsedControlProps {
@@ -314,6 +340,10 @@ export const StyledSidebarCollapsedControl =
 
       [`@media (max-width: ${theme.breakpoints.md})`]: {
         color: theme.colors.bodyText,
+      },
+
+      [`@media print`]: {
+        display: "none",
       },
     })
   )

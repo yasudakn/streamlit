@@ -15,6 +15,7 @@
 """Tests that are common to both st.cache_data and st.cache_resource"""
 
 import threading
+import time
 import unittest
 from datetime import timedelta
 from typing import Any, List
@@ -45,9 +46,9 @@ from streamlit.runtime.scriptrunner import (
 )
 from streamlit.runtime.state import SafeSessionState, SessionState
 from streamlit.runtime.uploaded_file_manager import UploadedFileManager
+from streamlit.testing.script_interactions import InteractiveScriptTests
 from tests.delta_generator_test_case import DeltaGeneratorTestCase
 from tests.exception_capturing_thread import ExceptionCapturingThread, call_on_threads
-from tests.script_interactions import InteractiveScriptTests
 from tests.streamlit.elements.image_test import create_image
 from tests.testutil import create_mock_script_run_ctx
 
@@ -204,6 +205,33 @@ class CommonCacheTest(DeltaGeneratorTestCase):
         # **kwarg (VAR_KEYWORD)
         foo(1, 2, 3, kwarg1=4, _kwarg2=5, kwarg3=None, _kwarg4=7)
         self.assertEqual([5], call_count)
+
+    @parameterized.expand(
+        [("cache_data", cache_data), ("cache_resource", cache_resource)]
+    )
+    def test_cached_member_function(self, _, cache_decorator):
+        """Our cache decorators can be applied to class member functions."""
+
+        class TestClass:
+            @cache_decorator
+            def member_func(_self):
+                # We underscore-prefix `_self`, because our class is not hashable.
+                return "member func!"
+
+            @classmethod
+            @cache_decorator
+            def class_method(cls):
+                return "class method!"
+
+            @staticmethod
+            @cache_decorator
+            def static_method():
+                return "static method!"
+
+        obj = TestClass()
+        self.assertEqual("member func!", obj.member_func())
+        self.assertEqual("class method!", obj.class_method())
+        self.assertEqual("static method!", obj.static_method())
 
     @parameterized.expand(
         [
@@ -831,11 +859,38 @@ class CommonCacheThreadingTest(unittest.TestCase):
         # Call foo from multiple threads and assert no errors.
         call_on_threads(call_foo, self.NUM_THREADS)
 
-        # We don't currently guarantee that the cached function will only be called
-        # once (multiple threads may compute the cached value independently if they
-        # access the function at ~the same time).
-        # TODO: But this might be a useful optimization for the future!
-        # self.assertEqual(1, cached_func_call_count[0])
+        # The cached function should only be called once (see `test_compute_value_only_once`).
+        self.assertEqual(1, cached_func_call_count[0])
+
+    @parameterized.expand(
+        [("cache_data", cache_data), ("cache_resource", cache_resource)]
+    )
+    def test_compute_value_only_once(self, _, cache_decorator):
+        """Cached values should be computed only once, even if multiple sessions read from an
+        unwarmed cache simultaneously.
+        """
+        cached_func_call_count = [0]
+
+        @cache_decorator
+        def foo():
+            self.assertEqual(
+                0,
+                cached_func_call_count[0],
+                "A cached value was computed multiple times!",
+            )
+            cached_func_call_count[0] += 1
+
+            # Sleep to "guarantee" that our other threads try to access the
+            # cached data while it's being computed. (The other threads should
+            # block on cache computation, so this function should only
+            # be called a single time.)
+            time.sleep(0.25)
+            return 42
+
+        def call_foo(_: int) -> None:
+            self.assertEqual(42, foo())
+
+        call_on_threads(call_foo, num_threads=self.NUM_THREADS, timeout=0.5)
 
     @parameterized.expand(
         [
@@ -921,10 +976,9 @@ class CommonCacheThreadingTest(unittest.TestCase):
         self.assertEqual(1, get_counter())
 
 
-@patch("streamlit.source_util._cached_pages", new=None)
 class WidgetReplayInteractionTest(InteractiveScriptTests):
     def test_dynamic_widget_replay(self):
-        script = self.script_from_filename("cached_widget_replay_dynamic.py")
+        script = self.script_from_filename(__file__, "cached_widget_replay_dynamic.py")
 
         sr = script.run()
         assert len(sr.get("checkbox")) == 1
@@ -940,3 +994,12 @@ class WidgetReplayInteractionTest(InteractiveScriptTests):
         sr4 = sr3.get("checkbox")[0].uncheck().run()
         sr5 = sr4.get("button")[0].click().run()
         assert sr5.get("text")[0].value == "['foo']"
+
+
+class WidgetReplayTest(InteractiveScriptTests):
+    def test_arrow_replay(self):
+        """Regression test for https://github.com/streamlit/streamlit/issues/6103"""
+        script = self.script_from_filename(__file__, "arrow_replay.py")
+
+        sr = script.run()
+        assert len(sr.get("exception")) == 0

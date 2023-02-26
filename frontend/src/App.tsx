@@ -44,11 +44,21 @@ import { ScriptRunState } from "src/lib/ScriptRunState"
 import { SessionEventDispatcher } from "src/lib/SessionEventDispatcher"
 import {
   setCookie,
+  getIFrameEnclosingApp,
   hashString,
-  isEmbeddedInIFrame,
+  isEmbed,
+  isPaddingDisplayed,
+  isToolbarDisplayed,
+  isColoredLineDisplayed,
+  isScrollingHidden,
+  isFooterDisplayed,
+  isLightTheme,
+  isDarkTheme,
   isInChildFrame,
   notUndefined,
   getElementWidgetID,
+  generateUID,
+  getEmbeddingIdClassName,
 } from "src/lib/utils"
 import { BaseUriParts } from "src/lib/UriUtil"
 import {
@@ -73,7 +83,7 @@ import {
   IAppPage,
   AppPage,
 } from "src/autogen/proto"
-import { without, concat } from "lodash"
+import { without, concat, noop } from "lodash"
 
 import { RERUN_PROMPT_MODAL_DIALOG } from "src/lib/baseconsts"
 import { SessionInfo } from "src/lib/SessionInfo"
@@ -181,6 +191,8 @@ export class App extends PureComponent<Props, State> {
   private pendingElementsTimerRunning: boolean
 
   private readonly componentRegistry: ComponentRegistry
+
+  private readonly embeddingId: string = generateUID()
 
   constructor(props: Props) {
     super(props)
@@ -291,7 +303,7 @@ export class App extends PureComponent<Props, State> {
         this.props.hostCommunication.setAllowedOriginsResp,
     })
 
-    if (isEmbeddedInIFrame()) {
+    if (isScrollingHidden()) {
       document.body.classList.add("embedded")
     }
 
@@ -890,9 +902,17 @@ export class App extends PureComponent<Props, State> {
     ) {
       const successful =
         status === ForwardMsg.ScriptFinishedStatus.FINISHED_SUCCESSFULLY
-      // Notify any subscribers of this event (and do it on the next cycle of
-      // the event loop)
       window.setTimeout(() => {
+        // Set the theme if url query param ?embed_options=[light,dark]_theme is set
+        const [light, dark] = this.props.theme.availableThemes.slice(1, 3)
+        if (isLightTheme()) {
+          this.setAndSendTheme(light)
+        } else if (isDarkTheme()) {
+          this.setAndSendTheme(dark)
+        } else noop() // Do nothing when ?embed_options=[light,dark]_theme is not set
+
+        // Notify any subscribers of this event (and do it on the next cycle of
+        // the event loop)
         this.state.scriptFinishedHandlers.map(handler => handler())
       }, 0)
 
@@ -1287,6 +1307,34 @@ export class App extends PureComponent<Props, State> {
     this.openDialog(newDialog)
   }
 
+  /**
+   * Prints the app, if the app is in IFrame
+   * it prints the content of the IFrame.
+   * Before printing this function ensures the app has fully loaded,
+   * by checking if we're in ScriptRunState.NOT_RUNNING state.
+   */
+  printCallback = (): void => {
+    const { scriptRunState } = this.state
+    if (scriptRunState !== ScriptRunState.NOT_RUNNING) {
+      setTimeout(this.printCallback, 500)
+      return
+    }
+    let windowToPrint
+    try {
+      const htmlIFrameElement = getIFrameEnclosingApp(this.embeddingId)
+      if (htmlIFrameElement && htmlIFrameElement.contentWindow) {
+        windowToPrint = htmlIFrameElement.contentWindow.window
+      } else {
+        windowToPrint = window
+      }
+    } catch (err) {
+      windowToPrint = window
+    } finally {
+      if (!windowToPrint) windowToPrint = window
+      windowToPrint.print()
+    }
+  }
+
   screencastCallback = (): void => {
     const { scriptName } = this.state
     const { startRecording } = this.props.screenCast
@@ -1356,10 +1404,14 @@ export class App extends PureComponent<Props, State> {
     const { hideSidebarNav: hostHideSidebarNav } =
       this.props.hostCommunication.currentState
 
-    const outerDivClass = classNames("stApp", {
-      "streamlit-embedded": isEmbeddedInIFrame(),
-      "streamlit-wide": userSettings.wideMode,
-    })
+    const outerDivClass = classNames(
+      "stApp",
+      getEmbeddingIdClassName(this.embeddingId),
+      {
+        "streamlit-embedded": isEmbed(),
+        "streamlit-wide": userSettings.wideMode,
+      }
+    )
 
     const renderedDialog: React.ReactNode = dialog
       ? StreamlitDialog({
@@ -1378,7 +1430,6 @@ export class App extends PureComponent<Props, State> {
           initialSidebarState,
           layout,
           wideMode: userSettings.wideMode,
-          embedded: isEmbeddedInIFrame(),
           isFullScreen,
           setFullScreen: this.handleFullScreen,
           addScriptFinishedHandler: this.addScriptFinishedHandler,
@@ -1390,6 +1441,12 @@ export class App extends PureComponent<Props, State> {
           sidebarChevronDownshift:
             this.props.hostCommunication.currentState.sidebarChevronDownshift,
           getBaseUriParts: this.getBaseUriParts,
+          embedded: isEmbed(),
+          showPadding: !isEmbed() || isPaddingDisplayed(),
+          disableScrolling: isScrollingHidden(),
+          showFooter: !isEmbed() || isFooterDisplayed(),
+          showToolbar: !isEmbed() || isToolbarDisplayed(),
+          showColoredLine: !isEmbed() || isColoredLineDisplayed(),
         }}
       >
         <HotKeys
@@ -1427,6 +1484,7 @@ export class App extends PureComponent<Props, State> {
                 clearCacheCallback={this.openClearCacheDialog}
                 settingsCallback={this.settingsCallback}
                 aboutCallback={this.aboutCallback}
+                printCallback={this.printCallback}
                 screencastCallback={this.screencastCallback}
                 screenCastState={this.props.screenCast.currentState}
                 hostMenuItems={
