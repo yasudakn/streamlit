@@ -63,7 +63,7 @@ export const StyledSidebar = styled.section<StyledSidebarProps>(
   }
 )
 
-export const StyledSidebarNavContainer = styled.div(({ theme }) => ({
+export const StyledSidebarNavContainer = styled.div(() => ({
   position: "relative",
   paddingLeft: "1rem",
 }))
@@ -169,7 +169,7 @@ export const StyledSidebarNavSeparatorContainer =
     })
   )
 
-export const StyledSidebarNavLinkContainer = styled.div(({ theme }) => ({
+export const StyledSidebarNavLinkContainer = styled.div(() => ({
   display: "flex",
   flexDirection: "column",
 }))
@@ -297,7 +297,7 @@ export interface StyledSidebarContentProps {
 }
 
 export const StyledSidebarContent = styled.div<StyledSidebarContentProps>(
-  ({ hideScrollbar, theme }) => ({
+  ({ hideScrollbar }) => ({
     position: "relative",
     height: "100%",
     width: "100%",
