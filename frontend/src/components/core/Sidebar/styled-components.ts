@@ -68,7 +68,7 @@ export const StyledSidebarNavContainer = styled.div(() => ({
   paddingLeft: "1rem",
 }))
 
-export const StyledSidebarNavMajorClass = styled.div(({ theme }) => ({
+export const StyledSidebarNavMajorClass = styled.div(() => ({
   fontWeight: 600,
 }))
 
@@ -228,7 +228,7 @@ export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
   }
 )
 
-export const StyledSidebarHeaderLogo = styled.div(({ theme }) => ({
+export const StyledSidebarHeaderLogo = styled.div(() => ({
   paddingTop: "4rem",
   paddingLeft: "1rem",
   paddingRight: "1rem",
