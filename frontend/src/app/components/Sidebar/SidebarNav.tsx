@@ -56,10 +56,6 @@ const SidebarNav = ({
   hideParentScrollbar,
   onPageChange,
 }: Props): ReactElement | null => {
-  if (appPages.length < 2) {
-    return null
-  }
-
   const [expanded, setExpanded] = useState(true)
   const { pageLinkBaseUrl } = React.useContext(AppContext)
   const navItemsRef = useRef<HTMLUListElement>(null)
@@ -113,29 +109,29 @@ const SidebarNav = ({
             <li key={pageName}>
               <StyledSidebarNavLinkContainer>
                 {page.majorClass ? (
-                    <StyledSidebarNavMajorClass>
-                      {pageName.replace(/_/g, " ")}
-                    </StyledSidebarNavMajorClass>
-                  ) : (
-                    <StyledSidebarNavLink
-                      isActive={isActive}
-                      href={pageUrl}
-                      onClick={e => {
-                        e.preventDefault()
-                        onPageChange(page.pageScriptHash as string)
-                        if (reactDeviceDetect.isMobile) {
-                          collapseSidebar()
-                        }
-                      }}
-                    >
-                      {page.icon && page.icon.length && (
-                        <EmojiIcon size="lg">{page.icon}</EmojiIcon>
-                      )}
-                      <StyledSidebarLinkText isActive={isActive}>
-                        {tooltipContent}
-                      </StyledSidebarLinkText>
-                    </StyledSidebarNavLink>
-                  )}
+                  <StyledSidebarNavMajorClass>
+                    {pageName.replace(/_/g, " ")}
+                  </StyledSidebarNavMajorClass>
+                ) : (
+                  <StyledSidebarNavLink
+                    isActive={isActive}
+                    href={pageUrl}
+                    onClick={e => {
+                      e.preventDefault()
+                      onPageChange(page.pageScriptHash as string)
+                      if (reactDeviceDetect.isMobile) {
+                        collapseSidebar()
+                      }
+                    }}
+                  >
+                    {page.icon && page.icon.length && (
+                      <EmojiIcon size="lg">{page.icon}</EmojiIcon>
+                    )}
+                    <StyledSidebarLinkText isActive={isActive}>
+                      {tooltipContent}
+                    </StyledSidebarLinkText>
+                  </StyledSidebarNavLink>
+                )}
               </StyledSidebarNavLinkContainer>
             </li>
           )
