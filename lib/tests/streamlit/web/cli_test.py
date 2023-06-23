@@ -79,7 +79,6 @@ class CliTest(unittest.TestCase):
         with patch("validators.url", return_value=False), patch(
             "streamlit.web.cli._main_run"
         ), patch("os.path.exists", return_value=True):
-
             result = self.runner.invoke(cli, ["run", "file_name.py"])
         self.assertEqual(0, result.exit_code)
 
@@ -89,7 +88,6 @@ class CliTest(unittest.TestCase):
         with patch("validators.url", return_value=False), patch(
             "streamlit.web.cli._main_run"
         ), patch("os.path.exists", return_value=False):
-
             result = self.runner.invoke(cli, ["run", "file_name.py"])
         self.assertNotEqual(0, result.exit_code)
         self.assertIn("File does not exist", result.output)
@@ -111,7 +109,6 @@ class CliTest(unittest.TestCase):
         with patch("validators.url", return_value=True), patch(
             "streamlit.web.cli._main_run"
         ), requests_mock.mock() as m:
-
             file_content = b"content"
             m.get("http://url/app.py", content=file_content)
             with patch("streamlit.temporary_directory.TemporaryDirectory") as mock_tmp:
@@ -131,7 +128,6 @@ class CliTest(unittest.TestCase):
         with patch("validators.url", return_value=True), patch(
             "streamlit.web.cli._main_run"
         ), requests_mock.mock() as m:
-
             m.get("http://url/app.py", exc=requests.exceptions.RequestException)
             with patch("streamlit.temporary_directory.TemporaryDirectory") as mock_tmp:
                 mock_tmp.return_value.__enter__.return_value = temp_dir.path
@@ -168,7 +164,6 @@ class CliTest(unittest.TestCase):
         with patch("validators.url", return_value=False), patch(
             "streamlit.web.cli._main_run"
         ), patch("os.path.exists", return_value=True):
-
             result = self.runner.invoke(
                 cli, ["run", "file_name.py", "--server.port=8502"]
             )
@@ -177,6 +172,18 @@ class CliTest(unittest.TestCase):
         _args, kwargs = streamlit.web.bootstrap.load_config_options.call_args
         self.assertEqual(kwargs["flag_options"]["server_port"], 8502)
         self.assertEqual(0, result.exit_code)
+
+    @parameterized.expand(["mapbox.token", "server.cookieSecret"])
+    def test_run_command_with_sensitive_options_as_flag(self, sensitive_option):
+        with patch("validators.url", return_value=False), patch(
+            "streamlit.web.cli._main_run"
+        ), patch("os.path.exists", return_value=True):
+            result = self.runner.invoke(
+                cli, ["run", "file_name.py", f"--{sensitive_option}=TESTSECRET"]
+            )
+
+        self.assertIn("option using the CLI flag is not allowed", result.output)
+        self.assertEqual(1, result.exit_code)
 
     def test_get_command_line(self):
         """Test that _get_command_line_as_string correctly concatenates values
@@ -335,7 +342,6 @@ class CliTest(unittest.TestCase):
         with patch("validators.url", return_value=False), patch(
             "streamlit.web.cli._main_run"
         ), patch("os.path.exists", return_value=True):
-
             result = self.runner.invoke(cli, ["hello", "--server.port=8502"])
 
         streamlit.web.bootstrap.load_config_options.assert_called_once()
@@ -355,7 +361,6 @@ class CliTest(unittest.TestCase):
         with patch("validators.url", return_value=False), patch(
             "streamlit.web.cli._main_run"
         ), patch("os.path.exists", return_value=True):
-
             result = self.runner.invoke(cli, ["config", "show", "--server.port=8502"])
 
         streamlit.web.bootstrap.load_config_options.assert_called_once()
@@ -502,19 +507,20 @@ class HTTPServerIntegrationTest(unittest.TestCase):
                         str(key_file),
                         "--server.headless",
                         "true",
+                        "--server.port=8510",
                     ],
                     env={**os.environ, "HOME": tmp_home},
                 )
             )
             try:
                 response = https_session.get(
-                    "https://localhost:8501/healthz", verify=str(pem_file)
+                    "https://localhost:8510/healthz", verify=str(pem_file)
                 )
                 response.raise_for_status()
                 assert response.text == "ok"
                 # HTTP traffic is restricted
                 with pytest.raises(requests.exceptions.ConnectionError):
-                    response = https_session.get("http://localhost:8501/healthz")
+                    response = https_session.get("http://localhost:8510/healthz")
                     response.raise_for_status()
             finally:
                 proc.kill()

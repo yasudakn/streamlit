@@ -16,7 +16,6 @@
 Global pytest fixtures. This file is automatically run by pytest before tests
 are executed.
 """
-import logging
 import os
 import sys
 from unittest.mock import mock_open, patch
@@ -66,17 +65,6 @@ with patch(
     source_util._cached_pages = {}
 
 
-def pytest_sessionfinish():
-    # We're not waiting for scriptrunner threads to cleanly close before ending the PyTest,
-    # which results in raised exception ValueError: I/O operation on closed file.
-    # This is well known issue in PyTest, check out these discussions for more:
-    # * https://github.com/pytest-dev/pytest/issues/5502
-    # * https://github.com/pytest-dev/pytest/issues/5282
-    # To prevent the exception from being raised on pytest_sessionfinish
-    # we disable exception raising in logging module
-    logging.raiseExceptions = False
-
-
 def pytest_addoption(parser: pytest.Parser):
     group = parser.getgroup("streamlit")
 
@@ -111,7 +99,7 @@ def pytest_configure(config: pytest.Config):
 
 
 def pytest_runtest_setup(item: pytest.Item):
-    is_require_snowflake = item.config.getoption("--require-snowflake")
+    is_require_snowflake = item.config.getoption("--require-snowflake", default=False)
     has_require_snowflake_marker = bool(
         list(item.iter_markers(name="require_snowflake"))
     )

@@ -42,6 +42,7 @@ from tests.streamlit.data_mocks import (
     INTERVAL_TYPES_DF,
     LIST_TYPES_DF,
     NUMBER_TYPES_DF,
+    PERIOD_TYPES_DF,
     SHARED_TEST_CASES,
     SPECIAL_TYPES_DF,
     UNSUPPORTED_TYPES_DF,
@@ -176,6 +177,15 @@ class TypeUtilTest(unittest.TestCase):
         data = {"a": 1, "b": 2}
         df = convert_anything_to_df(data)
         pd.testing.assert_frame_equal(df, pd.DataFrame.from_dict(data, orient="index"))
+
+    def test_convert_anything_to_df_calls_to_pandas_when_available(self):
+        class DataFrameIsh:
+            def to_pandas(self):
+                return pd.DataFrame([])
+
+        converted = convert_anything_to_df(DataFrameIsh())
+        assert isinstance(converted, pd.DataFrame)
+        assert converted.empty
 
     @parameterized.expand(
         [
@@ -349,6 +359,7 @@ dtype: object""",
             (DATETIME_TYPES_DF,),
             (INTERVAL_TYPES_DF,),
             (LIST_TYPES_DF,),
+            (PERIOD_TYPES_DF,),
             (NUMBER_TYPES_DF,),
             (SPECIAL_TYPES_DF,),
             (UNSUPPORTED_TYPES_DF,),
@@ -529,3 +540,60 @@ dtype: object""",
             type_util.convert_df_to_data_format(
                 pd.DataFrame({"a": [1, 2, 3]}), DataFormat.UNKNOWN
             )
+
+    def test_convert_df_with_missing_values(self):
+        """Test that `convert_df_to_data_format` correctly converts
+        all types of missing values to None.
+        """
+
+        # Add dataframe with different missing values:
+        df = pd.DataFrame(
+            {
+                "missing": [None, pd.NA, np.nan, pd.NaT],
+            }
+        )
+
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.LIST_OF_VALUES),
+            [None, None, None, None],
+        )
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.TUPLE_OF_VALUES),
+            (None, None, None, None),
+        )
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.SET_OF_VALUES),
+            {None},
+        )
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.LIST_OF_ROWS),
+            [
+                [None],
+                [None],
+                [None],
+                [None],
+            ],
+        )
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.LIST_OF_RECORDS),
+            [
+                {"missing": None},
+                {"missing": None},
+                {"missing": None},
+                {"missing": None},
+            ],
+        )
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.COLUMN_VALUE_MAPPING),
+            {
+                "missing": [None, None, None, None],
+            },
+        )
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.COLUMN_INDEX_MAPPING),
+            {"missing": {0: None, 1: None, 2: None, 3: None}},
+        )
+        self.assertEqual(
+            type_util.convert_df_to_data_format(df, DataFormat.KEY_VALUE_DICT),
+            {0: None, 1: None, 2: None, 3: None},
+        )

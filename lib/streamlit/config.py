@@ -59,6 +59,9 @@ _USER_DEFINED = "<user defined>"
 # or via command-line flag.
 _DEFINED_BY_FLAG = "command-line argument or environment variable"
 
+# Indicates that a config option was defined in an environment variable
+_DEFINED_BY_ENV_VAR = "environment variable"
+
 
 def set_option(key: str, value: Any, where_defined: str = _USER_DEFINED) -> None:
     """Set config option.
@@ -189,6 +192,7 @@ def _create_option(
     expiration_date: Optional[str] = None,
     replaced_by: Optional[str] = None,
     type_: type = str,
+    sensitive: bool = False,
 ) -> ConfigOption:
     '''Create a ConfigOption and store it globally in this module.
 
@@ -236,6 +240,7 @@ def _create_option(
         expiration_date=expiration_date,
         replaced_by=replaced_by,
         type_=type_,
+        sensitive=sensitive,
     )
     assert (
         option.section in _section_descriptions
@@ -272,6 +277,20 @@ _create_option(
         and, if not, prints a warning asking for you to install it. The watchdog
         module is not required, but highly recommended. It improves Streamlit's
         ability to detect changes to files in your filesystem.
+
+        If you'd like to turn off this warning, set this to True.
+        """,
+    default_val=False,
+    type_=bool,
+)
+
+
+_create_option(
+    "global.disableWidgetStateDuplicationWarning",
+    description="""
+        By default, Streamlit displays a warning when a user sets both a widget
+        default value in the function defining the widget and a widget value via
+        the widget's key in `st.session_state`.
 
         If you'd like to turn off this warning, set this to True.
         """,
@@ -454,6 +473,26 @@ _create_option(
     scriptable=True,
 )
 
+_create_option(
+    "client.toolbarMode",
+    description="""
+        Change the visibility of items in the toolbar, options menu,
+        and settings dialog (top right of the app).
+
+        Allowed values:
+        * "auto"      : Show the developer options if the app is accessed through
+                        localhost and hide them otherwise.
+        * "developer" : Show the developer options.
+        * "viewer"    : Hide the developer options.
+        * "minimal"   : Show only options set externally (e.g. through
+                        Streamlit Community Cloud) or through st.set_page_config.
+                        If there are no options left, hide the menu.
+""",
+    default_val="auto",
+    type_=str,
+    scriptable=True,
+)
+
 # Config Section: Runner #
 
 _create_section("runner", "Settings for how Streamlit executes your script")
@@ -514,6 +553,18 @@ _create_option(
     type_=bool,
 )
 
+_create_option(
+    "runner.enforceSerializableSessionState",
+    description="""
+        Raise an exception after adding unserializable data to Session State.
+        Some execution environments may require serializing all data in Session
+        State, so it may be useful to detect incompatibility during development,
+        or when the execution environment will stop supporting it in the future.
+    """,
+    default_val=False,
+    type_=bool,
+)
+
 # Config Section: Server #
 
 _create_section("server", "Settings for the Streamlit server")
@@ -548,7 +599,7 @@ _create_option(
 )
 
 
-@_create_option("server.cookieSecret", type_=str)
+@_create_option("server.cookieSecret", type_=str, sensitive=True)
 @util.memoize
 def _server_cookie_secret() -> str:
     """Symmetric key used to produce signed cookies. If deploying on multiple replicas, this should
@@ -819,6 +870,7 @@ _create_option(
                 To get a token for yourself, create an account at
                 https://mapbox.com. It's free (for moderate usage levels)!""",
     default_val="",
+    sensitive=True,
 )
 
 
@@ -994,6 +1046,20 @@ def _set_option(key: str, value: Any, where_defined: str) -> None:
         _config_options[key].set_value(value, where_defined)
 
 
+def _update_config_with_sensitive_env_var(config_options: Dict[str, ConfigOption]):
+    """Update the config system by parsing the environment variable.
+
+    This should only be called from get_config_options.
+    """
+    for opt_name, opt_val in config_options.items():
+        if not opt_val.sensitive:
+            continue
+        env_var_value = os.environ.get(opt_val.env_var)
+        if env_var_value is None:
+            continue
+        _set_option(opt_name, env_var_value, _DEFINED_BY_ENV_VAR)
+
+
 def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
     """Update the config system by parsing this string.
 
@@ -1130,6 +1196,8 @@ def get_config_options(
                 file_contents = input.read()
 
             _update_config_with_toml(file_contents, filename)
+
+        _update_config_with_sensitive_env_var(_config_options)
 
         for opt_name, opt_val in options_from_flags.items():
             _set_option(opt_name, opt_val, _DEFINED_BY_FLAG)

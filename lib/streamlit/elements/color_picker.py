@@ -114,7 +114,7 @@ class ColorPickerMixin:
             An optional boolean, which disables the color picker if set to
             True. The default is False. This argument can only be supplied by
             keyword.
-        label_visibility : "visible" or "hidden" or "collapsed"
+        label_visibility : "visible", "hidden", or "collapsed"
             The visibility of the label. If "hidden", the label doesn’t show but there
             is still empty space for it above the widget (equivalent to label="").
             If "collapsed", both the label and the space are removed. Default is
@@ -133,7 +133,7 @@ class ColorPickerMixin:
         >>> st.write('The current color is', color)
 
         .. output::
-           https://doc-color-picker.streamlitapp.com/
+           https://doc-color-picker.streamlit.app/
            height: 335px
 
         """

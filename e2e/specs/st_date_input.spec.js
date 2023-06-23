@@ -294,4 +294,47 @@ describe("st.date_input", () => {
         "Date Input Changed: False"
     );
   });
+
+  it("renders the calendar component correctly", () => {
+    // Get dark mode snapshot first. Taking light mode snapshot first
+    // for some reason ends up comparing dark with light
+    cy.changeTheme("Dark");
+
+    cy.get(".stDateInput").each((el, idx) => {
+      if (idx === 5 || idx === 2) {
+        // idx = 5 -> Disabled one cannot be clicked
+        // idx = 2 -> Range with no date calendar flaky (always shows current month/yr, so snapshot fails monthly)
+        return;
+      }
+      const testName = `date_input_calendar_${idx}`;
+      cy.getIndexed(".stDateInput", idx).click();
+      // Last protects against edge case in CI where two calendar objects open
+      cy.get('[data-baseweb="calendar"]').last().matchImageSnapshot(
+        `${testName}-dark`,
+        {
+          force: false,
+        }
+      );
+    });
+
+    // Revert back to light mode
+    cy.changeTheme("Light");
+    cy.get(".stDateInput").each((el, idx) => {
+      if (idx === 5 || idx === 2) {
+        // idx = 5 -> Disabled one cannot be clicked
+        // idx = 2 -> Range with no date calendar flaky (always shows current month/yr, so snapshot fails monthly)
+        return;
+      }
+      const testName = `date_input_calendar_${idx}`;
+      cy.getIndexed(".stDateInput", idx).click();
+      // Last protects against edge case in CI where two calendar objects open
+      cy.get('[data-baseweb="calendar"]').last().matchImageSnapshot(
+        testName,
+        {
+          force: false,
+        }
+      );
+      cy.screenshot();
+    });
+  });
 });

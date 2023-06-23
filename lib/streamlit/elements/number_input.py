@@ -83,6 +83,12 @@ class NumberInputMixin:
     ) -> Number:
         r"""Display a numeric input widget.
 
+        .. note::
+            Integer values exceeding +/- ``(1<<53) - 1`` cannot be accurately
+            stored or returned by the widget due to serialization contstraints
+            between the Python server and JavaScript client. You must handle
+            such numbers as floats, leading to a loss in precision.
+
         Parameters
         ----------
         label : str
@@ -111,16 +117,16 @@ class NumberInputMixin:
             For accessibility reasons, you should never set an empty label (label="")
             but hide it with label_visibility if needed. In the future, we may disallow
             empty labels by raising an exception.
-        min_value : int or float or None
+        min_value : int, float, or None
             The minimum permitted value.
             If None, there will be no minimum.
-        max_value : int or float or None
+        max_value : int, float, or None
             The maximum permitted value.
             If None, there will be no maximum.
-        value : int or float or None
+        value : int, float, or None
             The value of this widget when it first renders.
             Defaults to min_value, or 0.0 if min_value is None
-        step : int or float or None
+        step : int, float, or None
             The stepping interval.
             Defaults to 1 if the value is an int, 0.01 otherwise.
             If the value is not specified, the format parameter will be used.
@@ -145,7 +151,7 @@ class NumberInputMixin:
             An optional boolean, which disables the number input if set to
             True. The default is False. This argument can only be supplied by
             keyword.
-        label_visibility : "visible" or "hidden" or "collapsed"
+        label_visibility : "visible", "hidden", or "collapsed"
             The visibility of the label. If "hidden", the label doesn't show but there
             is still empty space for it above the widget (equivalent to label="").
             If "collapsed", both the label and the space are removed. Default is
@@ -165,7 +171,7 @@ class NumberInputMixin:
         >>> st.write('The current number is ', number)
 
         .. output::
-           https://doc-number-input.streamlitapp.com/
+           https://doc-number-input.streamlit.app/
            height: 260px
 
         """
@@ -283,13 +289,15 @@ class NumberInputMixin:
         # Ensure that the value matches arguments' types.
         all_ints = int_value and int_args
 
-        if (min_value and min_value > value) or (max_value and max_value < value):
+        if min_value is not None and value is not None and min_value > value:
             raise StreamlitAPIException(
-                "The default `value` of %(value)s "
-                "must lie between the `min_value` of %(min)s "
-                "and the `max_value` of %(max)s, inclusively."
-                % {"value": value, "min": min_value, "max": max_value}
+                f"The default `value` {value} must be greater than or equal to the `min_value` {min_value}"
             )
+        if max_value is not None and value is not None:
+            if max_value < value:
+                raise StreamlitAPIException(
+                    f"The default `value` {value} must be less than or equal to the `max_value` {max_value}"
+                )
 
         # Bounds checks. JSNumber produces human-readable exceptions that
         # we simply re-package as StreamlitAPIExceptions.

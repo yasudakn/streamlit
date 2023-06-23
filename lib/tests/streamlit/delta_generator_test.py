@@ -55,7 +55,7 @@ class RunWarningTest(unittest.TestCase):
     @patch("streamlit.runtime.Runtime.exists", MagicMock(return_value=False))
     def test_run_warning_presence(self):
         """Using Streamlit without `streamlit run` produces a warning."""
-        with self.assertLogs(level=logging.WARNING) as logs:
+        with self.assertLogs("streamlit", level=logging.WARNING) as logs:
             delta_generator._use_warning_has_been_displayed = False
             st.write("Using delta generator")
             output = "".join(logs.output)
@@ -66,7 +66,7 @@ class RunWarningTest(unittest.TestCase):
     def test_run_warning_absence(self):
         """Using Streamlit through the CLI results in a Runtime being instantiated,
         so it produces no usage warning."""
-        with self.assertLogs(level=logging.WARNING) as logs:
+        with self.assertLogs("streamlit", level=logging.WARNING) as logs:
             delta_generator._use_warning_has_been_displayed = False
             st.write("Using delta generator")
             # assertLogs is being used as a context manager, but it also checks
@@ -92,19 +92,19 @@ class RunWarningTest(unittest.TestCase):
                 "audio",
                 "balloons",
                 "bar_chart",
-                "beta_columns",
-                "beta_container",
-                "beta_expander",
                 "bokeh_chart",
                 "button",
                 "camera_input",
                 "caption",
+                "chat_input",
+                "chat_message",
                 "checkbox",
                 "code",
                 "color_picker",
                 "columns",
                 "container",
                 "dataframe",
+                "data_editor",
                 "date_input",
                 "dg",
                 "divider",

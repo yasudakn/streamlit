@@ -102,6 +102,7 @@ ValueFieldName: TypeAlias = Literal[
     "json_value",
     "string_value",
     "trigger_value",
+    "string_trigger_value",
 ]
 
 V_co = TypeVar(
@@ -137,10 +138,10 @@ Key: TypeAlias = Union[str, int]
 
 LabelVisibility = Literal["visible", "hidden", "collapsed"]
 
-# This should really be a Protocol, but can't be, due to:
-# https://github.com/python/mypy/issues/12933
-# https://github.com/python/mypy/issues/13081
-SupportsStr: TypeAlias = object
+
+class SupportsStr(Protocol):
+    def __str__(self) -> str:
+        ...
 
 
 def is_array_value_field_name(obj: object) -> TypeGuard[ArrayValueFieldName]:
@@ -449,7 +450,7 @@ def is_namedtuple(x: object) -> TypeGuard[NamedTuple]:
     return all(type(n).__name__ == "str" for n in f)
 
 
-def is_pandas_styler(obj: object) -> TypeGuard[Styler]:
+def is_pandas_styler(obj: object) -> TypeGuard["Styler"]:
     return is_type(obj, _PANDAS_STYLER_TYPE_STR)
 
 
@@ -503,12 +504,6 @@ def convert_anything_to_df(
     pandas.DataFrame
 
     """
-    # This is inefficient as the data will be converted back to Arrow
-    # when marshalled to protobuf, but area/bar/line charts need
-    # DataFrame magic to generate the correct output.
-    if isinstance(data, pa.Table):
-        return data.to_pandas()
-
     if is_type(data, _PANDAS_DF_TYPE_STR):
         return data.copy() if ensure_copy else data
 
@@ -536,10 +531,15 @@ def convert_anything_to_df(
             )
         return data
 
+    # This is inefficient when data is a pyarrow.Table as it will be converted
+    # back to Arrow when marshalled to protobuf, but area/bar/line charts need
+    # DataFrame magic to generate the correct output.
+    if hasattr(data, "to_pandas"):
+        return data.to_pandas()
+
     # Try to convert to pandas.DataFrame. This will raise an error is df is not
     # compatible with the pandas.DataFrame constructor.
     try:
-
         return DataFrame(data)
 
     except ValueError as ex:
@@ -849,13 +849,22 @@ def determine_data_format(input_data: Any) -> DataFormat:
     return DataFormat.UNKNOWN
 
 
+def _unify_missing_values(df: DataFrame) -> DataFrame:
+    """Unify all missing values in a DataFrame to None.
+
+    Pandas uses a variety of values to represent missing values, including np.nan,
+    NaT, None, and pd.NA. This function replaces all of these values with None,
+    which is the only missing value type that is supported by all data
+    """
+
+    return df.fillna(np.nan).replace([np.nan], [None])
+
+
 def convert_df_to_data_format(
     df: DataFrame, data_format: DataFormat
 ) -> Union[
     DataFrame,
     Series,
-    Index,
-    Styler,
     pa.Table,
     np.ndarray[Any, np.dtype[Any]],
     Tuple[Any],
@@ -875,7 +884,7 @@ def convert_df_to_data_format(
 
     Returns
     -------
-    pd.DataFrame, pd.Index, Styler, pa.Table, np.ndarray, tuple, list, set, dict
+    pd.DataFrame, pd.Series, pyarrow.Table, np.ndarray, list, set, tuple, or dict.
         The converted dataframe.
     """
     if data_format in [
@@ -905,14 +914,14 @@ def convert_df_to_data_format(
             )
         return df[df.columns[0]]
     elif data_format == DataFormat.LIST_OF_RECORDS:
-        return df.to_dict(orient="records")
+        return _unify_missing_values(df).to_dict(orient="records")
     elif data_format == DataFormat.LIST_OF_ROWS:
         # to_numpy converts the dataframe to a list of rows
-        return df.to_numpy().tolist()
+        return _unify_missing_values(df).to_numpy().tolist()
     elif data_format == DataFormat.COLUMN_INDEX_MAPPING:
-        return df.to_dict(orient="dict")
+        return _unify_missing_values(df).to_dict(orient="dict")
     elif data_format == DataFormat.COLUMN_VALUE_MAPPING:
-        return df.to_dict(orient="list")
+        return _unify_missing_values(df).to_dict(orient="list")
     elif data_format == DataFormat.COLUMN_SERIES_MAPPING:
         return df.to_dict(orient="series")
     elif data_format in [
@@ -920,6 +929,7 @@ def convert_df_to_data_format(
         DataFormat.TUPLE_OF_VALUES,
         DataFormat.SET_OF_VALUES,
     ]:
+        df = _unify_missing_values(df)
         return_list = []
         if len(df.columns) == 1:
             #  Get the first column and convert to list
@@ -934,6 +944,7 @@ def convert_df_to_data_format(
             return set(return_list)
         return return_list
     elif data_format == DataFormat.KEY_VALUE_DICT:
+        df = _unify_missing_values(df)
         # The key is expected to be the index -> this will return the first column
         # as a dict with index as key.
         return dict() if df.empty else df.iloc[:, 0].to_dict()

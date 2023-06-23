@@ -18,7 +18,7 @@ from streamlit.testing.script_interactions import InteractiveScriptTests
 
 class InteractiveScriptTest(InteractiveScriptTests):
     def test_widgets_script(self):
-        script = self.script_from_filename(__file__, "widgets_script.py")
+        script = self.script_from_filename("test_data/widgets_script.py")
         sr = script.run()
 
         # main and sidebar
@@ -61,11 +61,10 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_cached_widget_replay_rerun(self):
         script = self.script_from_string(
-            "cached_widget_replay.py",
             """
             import streamlit as st
 
-            @st.experimental_memo(experimental_allow_widgets=True)
+            @st.cache_data(experimental_allow_widgets=True, show_spinner=False)
             def foo(i):
                 options = ["foo", "bar", "baz", "qux"]
                 r = st.radio("radio", options, index=i)
@@ -83,11 +82,10 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_cached_widget_replay_interaction(self):
         script = self.script_from_string(
-            "cached_widget_replay.py",
             """
             import streamlit as st
 
-            @st.experimental_memo(experimental_allow_widgets=True)
+            @st.cache_data(experimental_allow_widgets=True, show_spinner=False)
             def foo(i):
                 options = ["foo", "bar", "baz", "qux"]
                 r = st.radio("radio", options, index=i)
@@ -107,7 +105,6 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_radio_interaction(self):
         script = self.script_from_string(
-            "radio_interaction.py",
             """
             import streamlit as st
 
@@ -129,7 +126,6 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_widget_key_lookup(self):
         script = self.script_from_string(
-            "widget_keys.py",
             """
             import streamlit as st
 
@@ -148,7 +144,6 @@ class InteractiveScriptTest(InteractiveScriptTests):
         appropriately, as the widget is added and removed from the script execution.
         """
         script = self.script_from_string(
-            "widget_added_and_removed.py",
             """
             import streamlit as st
 
@@ -179,7 +174,6 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_query_narrowing(self):
         script = self.script_from_string(
-            "narrowing.py",
             """
             import streamlit as st
 
@@ -197,7 +191,6 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_session_state_immutable(self):
         script = self.script_from_string(
-            "session_state_copy.py",
             """
             import streamlit as st
 
@@ -229,7 +222,6 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_radio_option_types(self):
         script = self.script_from_string(
-            "radio_options.py",
             """
             import streamlit as st
 
@@ -246,4 +238,4 @@ class InteractiveScriptTest(InteractiveScriptTests):
 
     def test_script_not_found(self):
         with pytest.raises(AssertionError):
-            self.script_from_filename(__file__, "doesntexist.py")
+            self.script_from_filename("doesntexist.py")

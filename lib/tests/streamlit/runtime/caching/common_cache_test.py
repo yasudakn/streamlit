@@ -534,7 +534,7 @@ class CommonCacheTest(DeltaGeneratorTestCase):
 
         @cache_decorator
         def img_fn_multi():
-            st.image([create_image(5), create_image(15), create_image(1)])
+            st.image([create_image(5), create_image(15), create_image(100)])
 
         img_fn_multi()
         img_fn_multi()
@@ -990,7 +990,7 @@ class CommonCacheThreadingTest(unittest.TestCase):
 
 class WidgetReplayInteractionTest(InteractiveScriptTests):
     def test_dynamic_widget_replay(self):
-        script = self.script_from_filename(__file__, "cached_widget_replay_dynamic.py")
+        script = self.script_from_filename("test_data/cached_widget_replay_dynamic.py")
 
         sr = script.run()
         assert len(sr.get("checkbox")) == 1
@@ -1011,7 +1011,7 @@ class WidgetReplayInteractionTest(InteractiveScriptTests):
 class WidgetReplayTest(InteractiveScriptTests):
     def test_arrow_replay(self):
         """Regression test for https://github.com/streamlit/streamlit/issues/6103"""
-        script = self.script_from_filename(__file__, "arrow_replay.py")
+        script = self.script_from_filename("test_data/arrow_replay.py")
 
         sr = script.run()
         assert len(sr.get("exception")) == 0

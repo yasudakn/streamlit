@@ -33,6 +33,7 @@ class TestCaseMetadata(NamedTuple):
     expected_rows: int
     expected_cols: int
     expected_data_format: DataFormat
+    __test__ = False  # Tell pytest that this is not a test class
 
 
 SHARED_TEST_CASES = [
@@ -55,7 +56,9 @@ SHARED_TEST_CASES = [
     (pd.DataFrame(), TestCaseMetadata(0, 0, DataFormat.PANDAS_DATAFRAME)),
     # Empty dataframe with columns:
     (
-        pd.DataFrame(columns=["name", "type"]),
+        pd.DataFrame(
+            columns=["name", "type"], index=pd.RangeIndex(start=0, step=1)
+        ),  # Explicitly set the range index to have the same behavior across versions
         TestCaseMetadata(0, 2, DataFormat.PANDAS_DATAFRAME),
     ),
     # Pandas DataFrame:
@@ -362,6 +365,19 @@ INTERVAL_TYPES_DF = pd.DataFrame(
     }
 )
 
+
+_offset_types = ["L", "S", "T", "H", "D", "W", "W-FRI", "Q", "Q-MAY"]
+
+PERIOD_TYPES_DF = pd.DataFrame(
+    {
+        offset_type: (
+            [pd.Period(date, freq=offset_type) for date in ["1970-01-01", "2012-02-14"]]
+            + [None]
+        )
+        for offset_type in _offset_types
+    }
+)
+
 SPECIAL_TYPES_DF = pd.DataFrame(
     {
         "categorical": pd.Series(["a", "b", "c", "a", None]).astype("category"),
@@ -383,12 +399,10 @@ SPECIAL_TYPES_DF = pd.DataFrame(
 
 UNSUPPORTED_TYPES_DF = pd.DataFrame(
     {
-        "period[H]": [
-            (pd.Period("2022-03-14 11:52:00", freq="H") + pd.offsets.Hour(i))
+        "period[B]": [
+            (pd.Period("2022-03-10", freq="B") + pd.offsets.BusinessDay(i))
             for i in range(3)
         ]
-        + [None],
-        "period[D]": [(pd.Period(random_date().date(), freq="D")) for _ in range(3)]
         + [None],
         "complex": pd.Series([1 + 2j, 3 + 4j, 5 + 6 * 1j, None]),
         "timedelta": pd.Series(

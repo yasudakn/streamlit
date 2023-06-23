@@ -18,6 +18,7 @@ import threading
 import unittest
 from asyncio import AbstractEventLoop
 from typing import Any, Callable, List, Optional, cast
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -47,7 +48,6 @@ from streamlit.runtime.scriptrunner import (
 from streamlit.runtime.state import SessionState
 from streamlit.runtime.uploaded_file_manager import UploadedFileManager
 from streamlit.watcher.local_sources_watcher import LocalSourcesWatcher
-from tests.isolated_asyncio_test_case import IsolatedAsyncioTestCase
 from tests.testutil import patch_config_options
 
 
@@ -68,6 +68,7 @@ def _create_test_session(event_loop: Optional[AbstractEventLoop] = None) -> AppS
         return AppSession(
             script_data=ScriptData("/fake/script_path.py", "fake_command_line"),
             uploaded_file_manager=MagicMock(),
+            script_cache=MagicMock(),
             message_enqueued_callback=None,
             local_sources_watcher=MagicMock(),
             user_info={"email": "test@test.com"},
@@ -93,7 +94,7 @@ class AppSessionTest(unittest.TestCase):
         Runtime._instance = None
 
     @patch(
-        "streamlit.runtime.app_session.secrets_singleton._file_change_listener.disconnect"
+        "streamlit.runtime.app_session.secrets_singleton.file_change_listener.disconnect"
     )
     def test_shutdown(self, patched_disconnect):
         """Test that AppSession.shutdown behaves sanely."""
@@ -110,6 +111,7 @@ class AppSessionTest(unittest.TestCase):
         # A 2nd shutdown call should have no effect.
         session.shutdown()
         self.assertEqual(AppSessionState.SHUTDOWN_REQUESTED, session._state)
+
         mock_file_mgr.remove_session_files.assert_called_once_with(session.id)
 
     def test_shutdown_with_running_scriptrunner(self):
@@ -175,7 +177,7 @@ class AppSessionTest(unittest.TestCase):
         clear_legacy_cache.assert_called_once()
 
     @patch(
-        "streamlit.runtime.app_session.secrets_singleton._file_change_listener.connect"
+        "streamlit.runtime.app_session.secrets_singleton.file_change_listener.connect"
     )
     def test_request_rerun_on_secrets_file_change(self, patched_connect):
         """AppSession should add a secrets listener on creation."""
@@ -263,6 +265,7 @@ class AppSessionTest(unittest.TestCase):
             client_state=session._client_state,
             session_state=session._session_state,
             uploaded_file_mgr=session._uploaded_file_mgr,
+            script_cache=session._script_cache,
             initial_rerun_data=RerunData(),
             user_info={"email": "test@test.com"},
         )
@@ -333,6 +336,7 @@ class AppSessionTest(unittest.TestCase):
         session.request_rerun = MagicMock()
         session._on_source_file_changed()
 
+        session._script_cache.clear.assert_called_once()
         session.request_rerun.assert_called_once_with(session._client_state)
 
     @patch(
@@ -344,6 +348,9 @@ class AppSessionTest(unittest.TestCase):
         session._run_on_save = True
         session.request_rerun = MagicMock()
         session._on_source_file_changed("/fake/script_path.py")
+
+        # Clearing the cache should still have been called
+        session._script_cache.clear.assert_called_once()
 
         self.assertEqual(session.request_rerun.called, False)
 
@@ -403,7 +410,7 @@ class AppSessionTest(unittest.TestCase):
     @patch("streamlit.runtime.app_session.config.on_config_parsed")
     @patch("streamlit.runtime.app_session.source_util.register_pages_changed_callback")
     @patch(
-        "streamlit.runtime.app_session.secrets_singleton._file_change_listener.connect"
+        "streamlit.runtime.app_session.secrets_singleton.file_change_listener.connect"
     )
     def test_registers_file_watchers(
         self,
@@ -434,7 +441,7 @@ class AppSessionTest(unittest.TestCase):
         self.assertIsNotNone(session._local_sources_watcher)
 
     @patch(
-        "streamlit.runtime.app_session.secrets_singleton._file_change_listener.disconnect"
+        "streamlit.runtime.app_session.secrets_singleton.file_change_listener.disconnect"
     )
     def test_disconnect_file_watchers(self, patched_secrets_disconnect):
         session = _create_test_session()

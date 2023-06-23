@@ -16,7 +16,7 @@ import contextlib
 import datetime
 import unittest
 from collections import Counter
-from typing import Callable
+from typing import Any, Callable
 from unittest.mock import MagicMock, mock_open, patch
 
 import pandas as pd
@@ -24,6 +24,7 @@ from parameterized import parameterized
 
 import streamlit as st
 import streamlit.components.v1 as components
+from streamlit.connections import SnowparkConnection, SQLConnection
 from streamlit.runtime import metrics_util
 from streamlit.runtime.caching import cache_data_api, cache_resource_api
 from streamlit.runtime.legacy_caching import caching
@@ -85,7 +86,6 @@ class MetricsUtilTest(unittest.TestCase):
         with patch(
             "streamlit.runtime.metrics_util.uuid.getnode", return_value=MAC
         ), patch("streamlit.runtime.metrics_util.os.path.isfile", return_value=False):
-
             machine_id = metrics_util._get_machine_id_v3()
         self.assertEqual(machine_id, MAC)
 
@@ -94,6 +94,8 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
     def setUp(self):
         super().setUp()
         ctx = get_script_run_ctx()
+        assert ctx is not None
+
         ctx.reset()
         ctx.gather_usage_stats = True
 
@@ -110,6 +112,11 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
             (datetime.datetime.today().time(), "datetime.time"),
             (pd.DataFrame(), "DataFrame"),
             (pd.Series(), "PandasSeries"),
+            # Also support classes as input
+            (datetime.date, "datetime.date"),
+            (pd.DataFrame, "DataFrame"),
+            (SnowparkConnection, "SnowparkConnection"),
+            (SQLConnection, "SQLConnection"),
         ]
     )
     def test_get_type_name(self, obj: object, expected_type: str):
@@ -174,6 +181,7 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
     def test_gather_metrics_decorator(self):
         """The gather_metrics decorator works as expected."""
         ctx = get_script_run_ctx()
+        assert ctx is not None
 
         @metrics_util.gather_metrics("test_function")
         def test_function(param1: int, param2: str, param3: float = 0.1) -> str:
@@ -219,9 +227,12 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
             (components.iframe, "_iframe"),
         ]
     )
-    def test_internal_api_commands(self, command: Callable, expected_name: str):
+    def test_internal_api_commands(
+        self, command: Callable[..., Any], expected_name: str
+    ):
         """Some internal functions are also tracked and should use the correct name."""
         ctx = get_script_run_ctx()
+        assert ctx is not None
 
         # This will always throw an exception because of missing arguments
         # This is fine since the command still get tracked
@@ -246,6 +257,11 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
         """All commands of the public API should be tracked with the correct name."""
         # Some commands are currently not tracked for various reasons:
         ignored_commands = {
+            # We need to ignore `experimental_connection` because the `@gather_metrics`
+            # decorator is attached to a helper function rather than the
+            # publicly-exported function, which causes it not to be executed before an
+            # Exception is raised due to a lack of required arguments.
+            "experimental_connection",
             "experimental_rerun",
             "stop",
             "spinner",
@@ -273,6 +289,7 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
 
             # Reset tracked stats from previous calls.
             ctx = get_script_run_ctx()
+            assert ctx is not None
             ctx.reset()
             ctx.gather_usage_stats = True
 
@@ -293,12 +310,53 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
                 ),
             )
 
+    def test_column_config_commands(self):
+        """All commands of the public column config API should be tracked with the correct name."""
+        # Create a list of all public API names in the `st` module (minus
+        # the ignored commands from above).
+        public_api_names = sorted(
+            [
+                k
+                for k, v in st.column_config.__dict__.items()
+                if not k.startswith("_") and not isinstance(v, type(st.column_config))
+            ]
+        )
+
+        for api_name in public_api_names:
+            st_func = getattr(st.column_config, api_name)
+            if not callable(st_func):
+                continue
+
+            # Reset tracked stats from previous calls.
+            ctx = get_script_run_ctx()
+            assert ctx is not None
+            ctx.reset()
+            ctx.gather_usage_stats = True
+
+            # Call the API. This will often throw an exception due to missing
+            # arguments. But that's fine: the command will still be tracked.
+            with contextlib.suppress(Exception):
+                st_func()
+
+            # Assert that the API name is in the list of tracked commands.
+            # (It's possible for multiple tracked commands to be issued as
+            # the result of a single API call.)
+            self.assertIn(
+                "column_config." + api_name,
+                [cmd.name for cmd in ctx.tracked_commands],
+                (
+                    f"When executing `st.{api_name}()`, we expect the string "
+                    f'"{api_name}" to be in the list of tracked commands.',
+                ),
+            )
+
     def test_command_tracking_limits(self):
         """Command tracking limits should be respected.
 
         Current limits are 25 per unique command and 200 in total.
         """
         ctx = get_script_run_ctx()
+        assert ctx is not None
         ctx.reset()
         ctx.gather_usage_stats = True
 

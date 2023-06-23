@@ -19,7 +19,7 @@ import {
   ArrowTable as ArrowTableProto,
   FileUploaderState as FileUploaderStateProto,
   UploadedFileInfo as UploadedFileInfoProto,
-} from "src/autogen/proto"
+} from "src/lib/proto"
 import {
   createFormsData,
   FormsData,
@@ -147,6 +147,18 @@ describe("Widget State Manager", () => {
   it("sets trigger value correctly", () => {
     const widget = getWidget({ insideForm: false })
     widgetMgr.setTriggerValue(widget, { fromUi: true })
+    // @ts-expect-error
+    expect(widgetMgr.getWidgetState(widget)).toBe(undefined)
+    assertCallbacks({ insideForm: false })
+  })
+
+  /**
+   * String Triggers can't be used within forms, so this test
+   * is not parameterized on insideForm.
+   */
+  it("sets string trigger value correctly", () => {
+    const widget = getWidget({ insideForm: false })
+    widgetMgr.setStringTriggerValue(widget, "sample string", { fromUi: true })
     // @ts-expect-error
     expect(widgetMgr.getWidgetState(widget)).toBe(undefined)
     assertCallbacks({ insideForm: false })

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ForwardMsg } from "src/autogen/proto"
+import { ForwardMsg } from "src/lib/proto"
 import { ForwardMsgCache } from "src/lib/ForwardMessageCache"
 
 interface MockCache {
@@ -28,6 +28,8 @@ function createCache(): MockCache {
 
   const cache = new ForwardMsgCache({
     buildComponentURL: jest.fn(),
+    buildMediaURL: jest.fn(),
+    buildAppPageURL: jest.fn(),
     uploadFileUploaderFile: jest.fn(),
     fetchCachedForwardMsg: mockFetchCachedForwardMsg,
   })
