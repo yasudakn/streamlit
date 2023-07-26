@@ -18,13 +18,18 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 from typing import Any, Generic, List, Sequence, TypeVar, Union, cast, overload
 
-from typing_extensions import Literal, Self, TypeAlias
+from typing_extensions import Literal, TypeAlias
 
 from streamlit import util
 from streamlit.elements.heading import HeadingProtoTag
-from streamlit.elements.select_slider import SelectSliderSerde
-from streamlit.elements.slider import SliderScalar, SliderScalarT, SliderSerde, Step
-from streamlit.elements.time_widgets import (
+from streamlit.elements.widgets.select_slider import SelectSliderSerde
+from streamlit.elements.widgets.slider import (
+    SliderScalar,
+    SliderScalarT,
+    SliderSerde,
+    Step,
+)
+from streamlit.elements.widgets.time_widgets import (
     DateInputSerde,
     DateWidgetReturn,
     TimeInputSerde,
@@ -118,7 +123,7 @@ class Widget(ABC, Element):
     key: str | None
     _value: Any
 
-    def set_value(self, v: Any) -> Self:
+    def set_value(self, v: Any):
         self._value = v
         return self
 
