@@ -40,6 +40,7 @@ import {
   StyledSidebarCollapsedControl,
   StyledSidebarUserContent,
   StyledResizeHandle,
+  StyledSidebarHeaderLogo,
 } from "./styled-components"
 import SidebarNav from "./SidebarNav"
 
@@ -203,6 +204,57 @@ class Sidebar extends PureComponent<SidebarProps, State> {
     this.setState({ hideScrollbar: newValue })
   }
 
+  getImageNode = (children: ReactElement): ReactElement[] => {
+    // console.log(children)
+    const ret = this.recursiveFilteringImage(children)
+    return ret
+  }
+
+  excludeImageNode = (children: ReactElement): ReactElement[] => {
+    // console.log(children)
+    const ret = this.recursiveFilteringImage(children, true)
+    return ret
+  }
+
+  recursiveFilteringImage = (
+    children: ReactElement,
+    exclude = false
+  ): any[] => {
+    return React.Children.map(children, child => {
+      if (!React.isValidElement(child)) {
+        return child
+      }
+
+      if ((child as ReactElement).props.children) {
+        const props = {
+          children: this.recursiveFilteringImage(
+            (child as ReactElement).props.children,
+            exclude
+          ),
+        }
+        child = React.cloneElement(
+          child,
+          Object.assign({}, (child as ReactElement).props, props)
+        )
+      } else if ((child as ReactElement).props.node.children) {
+        const filterProps = (child as ReactElement).props
+        const arr: Array<any> = (child as ReactElement).props.node.children
+        filterProps.node.children = arr.filter(c => {
+          if (exclude) {
+            return c.element.imgs === null || c.element.imgs === undefined
+          }
+          return c.element.imgs
+        })
+        child = React.cloneElement(
+          child,
+          Object.assign({}, (child as ReactElement).props, filterProps)
+        )
+      }
+      // console.log(child.props)
+      return child
+    })
+  }
+
   // Additional safeguard for sidebar height sizing
   headerDecorationVisible(): boolean {
     let coloredLineExists = false
@@ -294,6 +346,9 @@ class Sidebar extends PureComponent<SidebarProps, State> {
                 <Icon content={Close} size="lg" />
               </BaseButton>
             </StyledSidebarCloseButton>
+            <StyledSidebarHeaderLogo>
+              {children && this.getImageNode(children)}
+            </StyledSidebarHeaderLogo>
             {!hideSidebarNav && (
               <SidebarNav
                 endpoints={this.props.endpoints}
@@ -309,7 +364,7 @@ class Sidebar extends PureComponent<SidebarProps, State> {
               data-testid="stSidebarUserContent"
               hasPageNavAbove={hasPageNavAbove}
             >
-              {children}
+              {children && this.excludeImageNode(children)}
             </StyledSidebarUserContent>
           </StyledSidebarContent>
         </Resizable>

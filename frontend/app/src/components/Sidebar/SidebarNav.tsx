@@ -36,6 +36,7 @@ import {
   StyledSidebarLinkText,
   StyledSidebarNavLinkContainer,
   StyledSidebarNavSeparatorContainer,
+  StyledSidebarNavMajorClass,
 } from "./styled-components"
 
 export interface Props {
@@ -59,7 +60,7 @@ const SidebarNav = ({
   onPageChange,
 }: Props): ReactElement | null => {
   const { pageLinkBaseUrl } = React.useContext(AppContext)
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const navItemsRef = useRef<HTMLUListElement>(null)
   const isOverflowing = useIsOverflowing(navItemsRef, expanded)
 
@@ -111,25 +112,31 @@ const SidebarNav = ({
           return (
             <li key={pageName}>
               <StyledSidebarNavLinkContainer>
-                <StyledSidebarNavLink
-                  data-testid="stSidebarNavLink"
-                  isActive={isActive}
-                  href={pageUrl}
-                  onClick={e => {
-                    e.preventDefault()
-                    onPageChange(page.pageScriptHash as string)
-                    if (reactDeviceDetect.isMobile) {
-                      collapseSidebar()
-                    }
-                  }}
-                >
-                  {page.icon && page.icon.length && (
-                    <EmojiIcon size="lg">{page.icon}</EmojiIcon>
-                  )}
-                  <StyledSidebarLinkText isActive={isActive}>
-                    {tooltipContent}
-                  </StyledSidebarLinkText>
-                </StyledSidebarNavLink>
+                {page.majorClass ? (
+                  <StyledSidebarNavMajorClass>
+                    {pageName.replace(/_/g, " ")}
+                  </StyledSidebarNavMajorClass>
+                ) : (
+                  <StyledSidebarNavLink
+                    data-testid="stSidebarNavLink"
+                    isActive={isActive}
+                    href={pageUrl}
+                    onClick={e => {
+                      e.preventDefault()
+                      onPageChange(page.pageScriptHash as string)
+                      if (reactDeviceDetect.isMobile) {
+                        collapseSidebar()
+                      }
+                    }}
+                  >
+                    {page.icon && page.icon.length && (
+                      <EmojiIcon size="lg">{page.icon}</EmojiIcon>
+                    )}
+                    <StyledSidebarLinkText isActive={isActive}>
+                      {tooltipContent}
+                    </StyledSidebarLinkText>
+                  </StyledSidebarNavLink>
+                )}
               </StyledSidebarNavLinkContainer>
             </li>
           )

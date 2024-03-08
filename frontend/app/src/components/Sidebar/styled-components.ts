@@ -66,6 +66,11 @@ export const StyledSidebar = styled.section<StyledSidebarProps>(
 
 export const StyledSidebarNavContainer = styled.div(() => ({
   position: "relative",
+  paddingLeft: "1rem",
+}))
+
+export const StyledSidebarNavMajorClass = styled.div(() => ({
+  fontWeight: 600,
 }))
 
 export interface StyledSidebarNavItemsProps {
@@ -223,6 +228,12 @@ export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
     }
   }
 )
+
+export const StyledSidebarHeaderLogo = styled.div(() => ({
+  paddingTop: "4rem",
+  paddingLeft: "1rem",
+  paddingRight: "1rem",
+}))
 
 export const StyledSidebarLinkText = styled.span<StyledSidebarNavLinkProps>(
   ({ isActive, theme }) => ({
