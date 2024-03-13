@@ -18,6 +18,7 @@ import React, { PureComponent, ReactElement, ReactNode } from "react"
 import { ChevronRight, Close } from "@emotion-icons/material-outlined"
 import { withTheme } from "@emotion/react"
 import { Resizable } from "re-resizable"
+import cloneDeep from "lodash/cloneDeep"
 
 import {
   Icon,
@@ -204,32 +205,21 @@ class Sidebar extends PureComponent<SidebarProps, State> {
     this.setState({ hideScrollbar: newValue })
   }
 
-  getImageNode = (children: ReactElement): ReactElement[] => {
-    // console.log(children)
-    const ret = this.recursiveFilteringImage(children)
-    return ret
-  }
-
   excludeImageNode = (children: ReactElement): ReactElement[] => {
-    // console.log(children)
-    const ret = this.recursiveFilteringImage(children, true)
+    const cloneChild = cloneDeep(children)
+    const ret = this.recursiveFilteringImage(cloneChild)
     return ret
   }
 
-  recursiveFilteringImage = (
-    children: ReactElement,
-    exclude = false
-  ): any[] => {
+  recursiveFilteringImage = (children: ReactElement): any[] => {
     return React.Children.map(children, child => {
       if (!React.isValidElement(child)) {
         return child
       }
-
       if ((child as ReactElement).props.children) {
         const props = {
           children: this.recursiveFilteringImage(
-            (child as ReactElement).props.children,
-            exclude
+            (child as ReactElement).props.children
           ),
         }
         child = React.cloneElement(
@@ -237,20 +227,17 @@ class Sidebar extends PureComponent<SidebarProps, State> {
           Object.assign({}, (child as ReactElement).props, props)
         )
       } else if ((child as ReactElement).props.node.children) {
-        const filterProps = (child as ReactElement).props
         const arr: Array<any> = (child as ReactElement).props.node.children
-        filterProps.node.children = arr.filter(c => {
-          if (exclude) {
-            return c.element.imgs === null || c.element.imgs === undefined
-          }
-          return c.element.imgs
+        const filterArr: Array<any> = arr.filter(c => {
+          return c.element.imgs == null
         })
+        ;(child as ReactElement).props.node.children = filterArr
         child = React.cloneElement(
           child,
-          Object.assign({}, (child as ReactElement).props, filterProps)
+          (child as ReactElement).props,
+          filterArr
         )
       }
-      // console.log(child.props)
       return child
     })
   }
@@ -346,9 +333,7 @@ class Sidebar extends PureComponent<SidebarProps, State> {
                 <Icon content={Close} size="lg" />
               </BaseButton>
             </StyledSidebarCloseButton>
-            <StyledSidebarHeaderLogo>
-              {children && this.getImageNode(children)}
-            </StyledSidebarHeaderLogo>
+            <StyledSidebarHeaderLogo>{children}</StyledSidebarHeaderLogo>
             {!hideSidebarNav && (
               <SidebarNav
                 endpoints={this.props.endpoints}
