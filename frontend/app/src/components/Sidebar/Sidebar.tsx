@@ -205,21 +205,31 @@ class Sidebar extends PureComponent<SidebarProps, State> {
     this.setState({ hideScrollbar: newValue })
   }
 
-  excludeImageNode = (children: ReactElement): ReactElement[] => {
-    const cloneChild = cloneDeep(children)
-    const ret = this.recursiveFilteringImage(cloneChild)
+  leaveImageNode = (children: ReactElement): ReactElement[] => {
+    const ret = this.recursiveFilteringImage(children, true)
     return ret
   }
 
-  recursiveFilteringImage = (children: ReactElement): any[] => {
-    return React.Children.map(children, child => {
+  excludeImageNode = (children: ReactElement): ReactElement[] => {
+    const ret = this.recursiveFilteringImage(children)
+    return ret
+  }
+
+  recursiveFilteringImage = (
+    children: ReactElement,
+    leaveImage = false
+  ): any[] => {
+    const cloneChild = cloneDeep(children)
+
+    return React.Children.map(cloneChild, child => {
       if (!React.isValidElement(child)) {
         return child
       }
       if ((child as ReactElement).props.children) {
         const props = {
           children: this.recursiveFilteringImage(
-            (child as ReactElement).props.children
+            (child as ReactElement).props.children,
+            leaveImage
           ),
         }
         child = React.cloneElement(
@@ -229,6 +239,9 @@ class Sidebar extends PureComponent<SidebarProps, State> {
       } else if ((child as ReactElement).props.node.children) {
         const arr: Array<any> = (child as ReactElement).props.node.children
         const filterArr: Array<any> = arr.filter(c => {
+          if (leaveImage) {
+            return c.element.imgs != null
+          }
           return c.element.imgs == null
         })
         ;(child as ReactElement).props.node.children = filterArr
@@ -333,7 +346,9 @@ class Sidebar extends PureComponent<SidebarProps, State> {
                 <Icon content={Close} size="lg" />
               </BaseButton>
             </StyledSidebarCloseButton>
-            <StyledSidebarHeaderLogo>{children}</StyledSidebarHeaderLogo>
+            <StyledSidebarHeaderLogo>
+              {children && this.leaveImageNode(children)}
+            </StyledSidebarHeaderLogo>
             {!hideSidebarNav && (
               <SidebarNav
                 endpoints={this.props.endpoints}
